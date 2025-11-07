@@ -14,28 +14,34 @@ import screenshotVatReturns from '@/images/screenshots/vat-returns.png'
 
 const features = [
   {
-    title: 'Payroll',
+    title: 'Trash Can Take-Out & Return',
     description:
-      "Keep track of everyone's salaries and whether or not they've been paid. Direct deposit not supported.",
+      'Starting at just $19.99/month, your bins magically appear curbside before pickup and reappear back in their spot afterward—no sprinting in your slippers, ever.',
     image: screenshotPayroll,
   },
   {
-    title: 'Claim expenses',
+    title: 'Sparkling Bin Wash',
     description:
-      "All of your receipts organized into one place, as long as you don't mind typing in the data by hand.",
+      'Add $7 per can and we swing by monthly or bi-monthly to scrub away funk so your cans smell like victory instead of leftovers.',
     image: screenshotExpenses,
   },
   {
-    title: 'VAT handling',
+    title: 'Poop Scoop Patrol',
     description:
-      "We only sell our software to companies who don't deal with VAT at all, so technically we do all the VAT stuff they need.",
+      'Weekly pet-waste removal ($15–20/visit) keeps your yard guest-ready and your shoes surprise-free—your pup can keep playing, you keep relaxing.',
     image: screenshotVatReturns,
   },
   {
-    title: 'Reporting',
+    title: 'Porch & Yard Refresh',
     description:
-      'Easily export your data into an Excel spreadsheet where you can do whatever the hell you want with it.',
+      'From $15 for porch and driveway blowing to $25+ seasonal raking, we tidy the spots guests notice so you get the high-fives without the rakes.',
     image: screenshotReporting,
+  },
+  {
+    title: 'Bundle the Bliss',
+    description:
+      'Mix and match favorites like our Home Care Basic ($34.99/mo) or Plus ($50/mo) plans for an all-in-one curbside concierge that still costs less than your streaming habit.',
+    image: screenshotExpenses,
   },
 ]
 
@@ -79,7 +85,7 @@ export function PrimaryFeatures() {
             Services that allow you to gain valued time back!
           </h2>
           <p className="mt-6 text-lg tracking-tight text-green-100">
-            Hire us to spare you with the mundain and pesky little tasks that can be affordably replaced!
+            We run the weekly routines, the messy add-ons, and even bundle plans so you get trusted curbside care and more time for the fun stuff.
           </p>
         </div>
         <TabGroup
