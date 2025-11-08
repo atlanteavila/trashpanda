@@ -20,10 +20,10 @@ interface Feature {
 
 const features: Array<Feature> = [
   {
-    name: 'Reporting',
-    summary: 'Stay on top of things with always up-to-date reporting features.',
+    name: 'Simple',
+    summary: '🗑️ Trash Can Take-Out & Return',
     description:
-      'We talked about reporting in the section above but we needed three items here, so mentioning it one more time for posterity.',
+      'Never miss trash day again — we roll your cans to the curb and bring them back once collected. Rain or shine, vacation or busy week, we make sure your cans are right where they should be, right on time.',
     image: screenshotProfitLoss,
     icon: function ReportingIcon() {
       let id = useId()
@@ -54,39 +54,20 @@ const features: Array<Feature> = [
     },
   },
   {
-    name: 'Inventory',
-    summary:
-      'Never lose track of what’s in stock with accurate inventory tracking.',
-    description:
-      'We don’t offer this as part of our software but that statement is inarguably true. Accurate inventory tracking would help you for sure.',
+    name: 'Cleanliness',
+    summary: 'Bin Cleaning & Sanitizing',
+    description: `Keep your bins fresh and odor-free with regular cleanings.
+We use eco-friendly, high-pressure washing to remove grime, bacteria, and that mystery smell no one wants to talk about.`,
     image: screenshotInventory,
     icon: function InventoryIcon() {
-      return (
-        <>
-          <path
-            opacity=".5"
-            d="M8 17a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2Z"
-            fill="#fff"
-          />
-          <path
-            opacity=".3"
-            d="M8 24a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2Z"
-            fill="#fff"
-          />
-          <path
-            d="M8 10a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2Z"
-            fill="#fff"
-          />
-        </>
-      )
+      return <>✨</>
     },
   },
   {
-    name: 'Contacts',
-    summary:
-      'Organize all of your contacts, service providers, and invoices in one place.',
-    description:
-      'This also isn’t actually a feature, it’s just some friendly advice. We definitely recommend that you do this, you’ll feel really organized and professional.',
+    name: 'Pet awesome',
+    summary: '🐾 Yard Poop Scoop Service',
+    description: `Enjoy a clean, safe yard for kids and pets.
+We’ll remove pet waste, sanitize the area, and keep your outdoor space healthy and spotless — because no one likes unpleasant surprises on the lawn.`,
     image: screenshotContacts,
     icon: function ContactsIcon() {
       return (
@@ -234,11 +215,10 @@ export function SecondaryFeatures() {
       <Container>
         <div className="mx-auto max-w-2xl md:text-center">
           <h2 className="font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
-            Simplify everyday business tasks.
+            Simplify your weekly trash routine.
           </h2>
           <p className="mt-4 text-lg tracking-tight text-slate-700">
-            Because you’d probably be a little confused if we suggested you
-            complicate your everyday business tasks instead.
+            Because life's too short to worry about trash day.
           </p>
         </div>
         <FeaturesMobile />

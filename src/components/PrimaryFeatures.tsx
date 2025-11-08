@@ -7,41 +7,42 @@ import clsx from 'clsx'
 
 import { Container } from '@/components/Container'
 import backgroundImage from '@/images/background-features.jpg'
-import screenshotExpenses from '@/images/screenshots/expenses.png'
-import screenshotPayroll from '@/images/screenshots/payroll.png'
-import screenshotReporting from '@/images/screenshots/reporting.png'
-import screenshotVatReturns from '@/images/screenshots/vat-returns.png'
+import CleanCans from '@/images/screenshots/clean-cans.png'
+import BundledServices from '@/images/screenshots/bundled-services.png'
+import CanServices from '@/images/screenshots/can-services.png'
+import LeafRaking from '@/images/screenshots/raking-service.png'
+import poopScoop from '@/images/screenshots/poop-scoop-duty.png'
 
 const features = [
   {
     title: 'Trash Can Take-Out & Return',
     description:
       'Starting at just $19.99/month, your bins magically appear curbside before pickup and reappear back in their spot afterward—no sprinting in your slippers, ever.',
-    image: screenshotPayroll,
+    image: CanServices,
   },
   {
     title: 'Sparkling Bin Wash',
     description:
       'Add $7 per can and we swing by monthly or bi-monthly to scrub away funk so your cans smell like victory instead of leftovers.',
-    image: screenshotExpenses,
+    image: CleanCans,
   },
   {
     title: 'Poop Scoop Patrol',
     description:
       'Weekly pet-waste removal ($15–20/visit) keeps your yard guest-ready and your shoes surprise-free—your pup can keep playing, you keep relaxing.',
-    image: screenshotVatReturns,
+    image: poopScoop,
   },
   {
     title: 'Porch & Yard Refresh',
     description:
       'From $15 for porch and driveway blowing to $25+ seasonal raking, we tidy the spots guests notice so you get the high-fives without the rakes.',
-    image: screenshotReporting,
+    image: LeafRaking,
   },
   {
     title: 'Bundle the Bliss',
     description:
       'Mix and match favorites like our Home Care Basic ($34.99/mo) or Plus ($50/mo) plans for an all-in-one curbside concierge that still costs less than your streaming habit.',
-    image: screenshotExpenses,
+    image: BundledServices,
   },
 ]
 
@@ -67,9 +68,9 @@ export function PrimaryFeatures() {
 
   return (
     <section
-      id="features"
-      aria-label="Features for running your books"
-      className="relative overflow-hidden bg-green-600 pt-20 pb-28 sm:py-32"
+      id="services"
+      aria-label="The Trash Panda services"
+      className="relative overflow-hidden bg-[#005413] pt-20 pb-28 sm:py-32"
     >
       <Image
         className="absolute top-1/2 left-1/2 max-w-none translate-x-[-44%] translate-y-[-42%]"
