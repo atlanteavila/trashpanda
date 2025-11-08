@@ -1,6 +1,6 @@
 'use client'
 
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import Image, { type ImageProps } from 'next/image'
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
 import clsx from 'clsx'
@@ -12,6 +12,8 @@ import cleanBins from '@/images/screenshots/clean-bins.png'
 
 import {
   ArrowsUpDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   GlobeAmericasIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline'
@@ -131,56 +133,78 @@ function FeaturesMobile() {
 }
 
 function FeaturesDesktop() {
+  const [selectedIndex, setSelectedIndex] = useState(0)
+
   return (
-    <TabGroup className="hidden lg:mt-20 lg:block">
-      {({ selectedIndex }) => (
-        <>
-          <TabList className="grid grid-cols-3 gap-x-8">
+    <TabGroup
+      selectedIndex={selectedIndex}
+      onChange={setSelectedIndex}
+      className="hidden lg:mt-20 lg:block"
+    >
+      <TabList className="grid grid-cols-3 gap-x-8">
+        {features.map((feature, featureIndex) => (
+          <Feature
+            key={feature.summary}
+            feature={{
+              ...feature,
+              name: (
+                <Tab className="data-selected:not-data-focus:outline-hidden">
+                  <span className="absolute inset-0" />
+                  {feature.name}
+                </Tab>
+              ),
+            }}
+            isActive={featureIndex === selectedIndex}
+            className="relative"
+          />
+        ))}
+      </TabList>
+      <TabPanels className="relative mt-20 overflow-hidden rounded-4xl bg-slate-200 px-14 py-16 xl:px-16">
+        <div className="relative">
+          <div
+            className="-mx-5 flex transition duration-500 ease-in-out"
+            style={{ transform: `translateX(-${selectedIndex * 100}%)` }}
+          >
             {features.map((feature, featureIndex) => (
-              <Feature
+              <TabPanel
+                static
                 key={feature.summary}
-                feature={{
-                  ...feature,
-                  name: (
-                    <Tab className="data-selected:not-data-focus:outline-hidden">
-                      <span className="absolute inset-0" />
-                      {feature.name}
-                    </Tab>
-                  ),
-                }}
-                isActive={featureIndex === selectedIndex}
-                className="relative"
-              />
+                className={clsx(
+                  'w-full flex-shrink-0 px-5 data-selected:not-data-focus:outline-hidden',
+                  featureIndex !== selectedIndex && 'opacity-60',
+                )}
+                aria-hidden={featureIndex !== selectedIndex}
+              >
+                <div className="mx-auto w-211 overflow-hidden rounded-xl bg-white shadow-lg ring-1 shadow-slate-900/5 ring-slate-500/10">
+                  <Image
+                    className="w-full"
+                    src={feature.image}
+                    alt=""
+                    sizes="52.75rem"
+                  />
+                </div>
+              </TabPanel>
             ))}
-          </TabList>
-          <TabPanels className="relative mt-20 overflow-hidden rounded-4xl bg-slate-200 px-14 py-16 xl:px-16">
-            <div className="-mx-5 flex">
-              {features.map((feature, featureIndex) => (
-                <TabPanel
-                  static
-                  key={feature.summary}
-                  className={clsx(
-                    'px-5 transition duration-500 ease-in-out data-selected:not-data-focus:outline-hidden',
-                    featureIndex !== selectedIndex && 'opacity-60',
-                  )}
-                  style={{ transform: `translateX(-${selectedIndex * 100}%)` }}
-                  aria-hidden={featureIndex !== selectedIndex}
-                >
-                  <div className="w-211 overflow-hidden rounded-xl bg-white shadow-lg ring-1 shadow-slate-900/5 ring-slate-500/10">
-                    <Image
-                      className="w-full"
-                      src={feature.image}
-                      alt=""
-                      sizes="52.75rem"
-                    />
-                  </div>
-                </TabPanel>
-              ))}
-            </div>
-            <div className="pointer-events-none absolute inset-0 rounded-4xl ring-1 ring-slate-900/10 ring-inset" />
-          </TabPanels>
-        </>
-      )}
+          </div>
+          <button
+            type="button"
+            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white p-2 text-slate-600 shadow-lg ring-1 ring-slate-900/10 transition hover:text-green-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+            onClick={() => setSelectedIndex((selectedIndex + features.length - 1) % features.length)}
+            aria-label="View previous feature"
+          >
+            <ChevronLeftIcon className="h-6 w-6" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white p-2 text-slate-600 shadow-lg ring-1 ring-slate-900/10 transition hover:text-green-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+            onClick={() => setSelectedIndex((selectedIndex + 1) % features.length)}
+            aria-label="View next feature"
+          >
+            <ChevronRightIcon className="h-6 w-6" aria-hidden="true" />
+          </button>
+        </div>
+        <div className="pointer-events-none absolute inset-0 rounded-4xl ring-1 ring-slate-900/10 ring-inset" />
+      </TabPanels>
     </TabGroup>
   )
 }
@@ -198,7 +222,7 @@ export function SecondaryFeatures() {
             Simplify your weekly trash routine.
           </h2>
           <p className="mt-4 text-lg tracking-tight text-slate-700">
-            Because life's too short to worry about trash day.
+            Because life&rsquo;s too short to worry about trash day.
           </p>
         </div>
         <FeaturesMobile />
