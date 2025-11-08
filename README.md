@@ -10,6 +10,20 @@ To get started with this template, first install the npm dependencies:
 npm install
 ```
 
+Create a copy of `.env.example` named `.env` and fill in the required values. At a minimum you will need a MongoDB connection
+string and a random `NEXTAUTH_SECRET`:
+
+```bash
+cp .env.example .env
+```
+
+Generate the Prisma client and sync the schema with your MongoDB database:
+
+```bash
+npx prisma generate
+npx prisma db push
+```
+
 Next, run the development server:
 
 ```bash

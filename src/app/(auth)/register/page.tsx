@@ -5,12 +5,20 @@ import { Button } from '@/components/Button'
 import { SelectField, TextField } from '@/components/Fields'
 import { Logo } from '@/components/Logo'
 import { SlimLayout } from '@/components/SlimLayout'
+import { US_STATES } from '@/lib/us-states'
 
 export const metadata: Metadata = {
   title: 'Sign Up',
 }
 
-export default function Register() {
+export default function Register({
+  searchParams,
+}: {
+  searchParams?: { error?: string | string[] }
+}) {
+  const errorParam = searchParams?.error
+  const errorMessage = Array.isArray(errorParam) ? errorParam[0] : errorParam
+
   return (
     <SlimLayout>
       <div className="flex">
@@ -31,8 +39,14 @@ export default function Register() {
         </Link>{' '}
         to your account.
       </p>
+      {errorMessage ? (
+        <p className="mt-6 rounded-md border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {errorMessage}
+        </p>
+      ) : null}
       <form
-        action="#"
+        action="/api/auth/register"
+        method="post"
         className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2"
       >
         <TextField
@@ -63,6 +77,42 @@ export default function Register() {
           name="password"
           type="password"
           autoComplete="new-password"
+          required
+        />
+        <TextField
+          className="col-span-full"
+          label="Street address"
+          name="street"
+          type="text"
+          autoComplete="street-address"
+          required
+        />
+        <TextField
+          label="City"
+          name="city"
+          type="text"
+          autoComplete="address-level2"
+          required
+        />
+        <SelectField
+          label="State"
+          name="state"
+          autoComplete="address-level1"
+          required
+        >
+          <option value="">Select a state</option>
+          {US_STATES.map((state) => (
+            <option key={state.value} value={state.value}>
+              {state.label}
+            </option>
+          ))}
+        </SelectField>
+        <TextField
+          label="ZIP code"
+          name="postal_code"
+          type="text"
+          inputMode="numeric"
+          autoComplete="postal-code"
           required
         />
         <SelectField
