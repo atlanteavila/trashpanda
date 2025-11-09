@@ -2,7 +2,7 @@ import { CheckoutStatus } from '@prisma/client'
 import { NextResponse } from 'next/server'
 
 import { auth } from '@/lib/auth'
-import prisma from '@/lib/prisma'
+import { requireCheckoutSessionDelegate } from '@/lib/prisma'
 import { retrieveStripeCheckoutSession } from '@/lib/stripe'
 
 type FinalizeOutcome = 'success' | 'cancelled'
@@ -47,7 +47,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 400 })
   }
 
-  let checkoutRecord = await prisma.checkoutSession.findFirst({
+  let checkoutSessions: ReturnType<typeof requireCheckoutSessionDelegate>
+  try {
+    checkoutSessions = requireCheckoutSessionDelegate()
+  } catch (error) {
+    console.error('CheckoutSession delegate unavailable', error)
+    return NextResponse.json(
+      {
+        error:
+          'We could not finalize checkout because the database client is outdated. Run `npx prisma generate` and restart the server.',
+      },
+      { status: 503 },
+    )
+  }
+
+  let checkoutRecord = await checkoutSessions.findFirst({
     where: {
       userId: session.user.id,
       stripeSessionId: sessionId,
@@ -76,7 +90,7 @@ export async function POST(request: Request) {
   const metadataCheckoutId = stripeSession?.metadata?.checkoutSessionId
 
   if (!checkoutRecord && metadataCheckoutId) {
-    checkoutRecord = await prisma.checkoutSession.findFirst({
+    checkoutRecord = await checkoutSessions.findFirst({
       where: {
         id: metadataCheckoutId,
         userId: session.user.id,
@@ -84,7 +98,7 @@ export async function POST(request: Request) {
     })
 
     if (checkoutRecord && !checkoutRecord.stripeSessionId) {
-      checkoutRecord = await prisma.checkoutSession.update({
+      checkoutRecord = await checkoutSessions.update({
         where: { id: checkoutRecord.id },
         data: { stripeSessionId: sessionId },
       })
@@ -100,7 +114,7 @@ export async function POST(request: Request) {
 
   if (outcome === 'cancelled') {
     if (checkoutRecord.status !== CheckoutStatus.COMPLETED) {
-      await prisma.checkoutSession.update({
+      await checkoutSessions.update({
         where: { id: checkoutRecord.id },
         data: {
           status: CheckoutStatus.CANCELLED,
@@ -129,7 +143,7 @@ export async function POST(request: Request) {
   const stripeSubscriptionId =
     stripeSession && typeof stripeSession.subscription === 'string' ? stripeSession.subscription : null
 
-  await prisma.checkoutSession.update({
+  await checkoutSessions.update({
     where: { id: checkoutRecord.id },
     data: {
       status: CheckoutStatus.COMPLETED,

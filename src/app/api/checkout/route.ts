@@ -2,7 +2,7 @@ import { CheckoutStatus } from '@prisma/client'
 import { NextResponse } from 'next/server'
 
 import { auth } from '@/lib/auth'
-import prisma from '@/lib/prisma'
+import { requireCheckoutSessionDelegate } from '@/lib/prisma'
 import { createStripeCheckoutSession, getAppBaseUrl } from '@/lib/stripe'
 
 type CheckoutServicePayload = {
@@ -122,7 +122,21 @@ export async function POST(request: Request) {
 
   const label = addressPayload.label?.trim() ?? null
 
-  const checkoutRecord = await prisma.checkoutSession.create({
+  let checkoutSessions: ReturnType<typeof requireCheckoutSessionDelegate>
+  try {
+    checkoutSessions = requireCheckoutSessionDelegate()
+  } catch (error) {
+    console.error('CheckoutSession delegate unavailable', error)
+    return NextResponse.json(
+      {
+        error:
+          'Checkout is temporarily unavailable while the database client updates. Run `npx prisma generate` and restart the server.',
+      },
+      { status: 503 },
+    )
+  }
+
+  const checkoutRecord = await checkoutSessions.create({
     data: {
       userId: session.user.id,
       planId: payload.planId ?? null,
@@ -170,7 +184,7 @@ export async function POST(request: Request) {
       },
     })
 
-    await prisma.checkoutSession.update({
+    await checkoutSessions.update({
       where: { id: checkoutRecord.id },
       data: {
         stripeSessionId: checkoutSession.id,
@@ -181,7 +195,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Failed to create checkout session', error)
 
-    await prisma.checkoutSession
+    await checkoutSessions
       .update({
         where: { id: checkoutRecord.id },
         data: {
