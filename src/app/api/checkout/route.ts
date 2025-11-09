@@ -1,6 +1,8 @@
+import { CheckoutStatus } from '@prisma/client'
 import { NextResponse } from 'next/server'
 
 import { auth } from '@/lib/auth'
+import prisma from '@/lib/prisma'
 import { createStripeCheckoutSession, getAppBaseUrl } from '@/lib/stripe'
 
 type CheckoutServicePayload = {
@@ -116,7 +118,32 @@ export async function POST(request: Request) {
       ? payload.total
       : null
 
-  const baseUrl = getAppBaseUrl()
+  const baseUrl = getAppBaseUrl(request)
+
+  const label = addressPayload.label?.trim() ?? null
+
+  const checkoutRecord = await prisma.checkoutSession.create({
+    data: {
+      userId: session.user.id,
+      planId: payload.planId ?? null,
+      planName: payload.planName ?? null,
+      addressLabel: label,
+      addressStreet: street,
+      addressCity: city,
+      addressState: state,
+      addressPostalCode: postalCode,
+      addressSummary,
+      services: services.map((service) => ({
+        id: service.id,
+        name: service.name,
+        frequency: service.frequency,
+        quantity: service.quantity,
+        monthlyRate: service.monthlyRate,
+        notes: service.notes ?? null,
+      })),
+      monthlyTotal: safeTotal,
+    },
+  })
 
   try {
     const checkoutSession = await createStripeCheckoutSession({
@@ -129,22 +156,40 @@ export async function POST(request: Request) {
         notes: service.notes,
       })),
       customerEmail: session.user.email ?? null,
-      successUrl: `${baseUrl}/dash?checkout=success`,
-      cancelUrl: `${baseUrl}/dash?checkout=cancelled`,
+      successUrl: `${baseUrl}/dash?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${baseUrl}/dash?checkout=cancelled&session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         userId: session.user.id,
         planId: payload.planId ?? '',
         planName: payload.planName ?? '',
         addressId: addressPayload.id ?? '',
-        addressLabel: addressPayload.label ?? '',
+        addressLabel: label ?? '',
         addressSummary,
         monthlyTotal: safeTotal ? safeTotal.toFixed(2) : '',
+        checkoutSessionId: checkoutRecord.id,
+      },
+    })
+
+    await prisma.checkoutSession.update({
+      where: { id: checkoutRecord.id },
+      data: {
+        stripeSessionId: checkoutSession.id,
       },
     })
 
     return NextResponse.json({ url: checkoutSession.url })
   } catch (error) {
     console.error('Failed to create checkout session', error)
+
+    await prisma.checkoutSession
+      .update({
+        where: { id: checkoutRecord.id },
+        data: {
+          status: CheckoutStatus.CANCELLED,
+        },
+      })
+      .catch(() => undefined)
+
     const message =
       error instanceof Error && /not configured/i.test(error.message)
         ? 'Checkout is unavailable. Please try again later.'

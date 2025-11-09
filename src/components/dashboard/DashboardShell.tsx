@@ -18,6 +18,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import type { Session } from 'next-auth'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 import { Button } from '@/components/Button'
 
@@ -79,6 +80,11 @@ interface SelectedServiceDetail {
   monthlyRate: number
   lineTotal: number
   frequency: string
+}
+
+type CheckoutNotice = {
+  type: 'success' | 'info' | 'error'
+  message: string
 }
 
 const serviceCatalog: ServiceDefinition[] = [
@@ -168,12 +174,23 @@ function createAddressId() {
   return `addr-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36)}`
 }
 
+const noticeToneStyles: Record<CheckoutNotice['type'], string> = {
+  success:
+    'border-green-200 bg-green-50 text-green-800 dark:border-green-500/40 dark:bg-green-500/10 dark:text-green-200',
+  info:
+    'border-indigo-200 bg-indigo-50 text-indigo-800 dark:border-indigo-400/40 dark:bg-indigo-500/10 dark:text-indigo-200',
+  error:
+    'border-red-200 bg-red-50 text-red-800 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200',
+}
+
 interface DashboardShellProps {
   user: Session['user']
   initialAddresses: DashboardAddress[]
 }
 
 export function DashboardShell({ user, initialAddresses }: DashboardShellProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activePlanId, setActivePlanId] = useState<string | null>(null)
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
@@ -200,6 +217,7 @@ export function DashboardShell({ user, initialAddresses }: DashboardShellProps) 
   })
   const [checkoutStatus, setCheckoutStatus] = useState<'idle' | 'loading'>('idle')
   const [checkoutError, setCheckoutError] = useState('')
+  const [checkoutNotice, setCheckoutNotice] = useState<CheckoutNotice | null>(null)
 
   const [selectedServices, setSelectedServices] = useState<Record<ServiceId, ServiceSelection>>(() => {
     return serviceCatalog.reduce((acc, service) => {
@@ -423,6 +441,97 @@ export function DashboardShell({ user, initialAddresses }: DashboardShellProps) 
   const greeting = user.firstName ? `Hello ${user.firstName}!` : 'Welcome back!'
 
   useEffect(() => {
+    const outcomeParam = searchParams.get('checkout')
+
+    if (!outcomeParam) {
+      return
+    }
+
+    const normalizedOutcome =
+      outcomeParam === 'success'
+        ? 'success'
+        : outcomeParam === 'cancelled'
+          ? 'cancelled'
+          : null
+
+    if (!normalizedOutcome) {
+      router.replace('/dash', { scroll: false })
+      return
+    }
+
+    const sessionIdParam = (searchParams.get('session_id') ?? '').trim()
+
+    if (!sessionIdParam) {
+      setCheckoutNotice({
+        type: normalizedOutcome === 'success' ? 'error' : 'info',
+        message:
+          normalizedOutcome === 'success'
+            ? 'We could not verify your checkout because Stripe did not return a session identifier. Please contact support so we can confirm your subscription.'
+            : 'Checkout was cancelled before a session was created. Your selections are still saved so you can try again anytime.',
+      })
+      setCheckoutError('')
+      router.replace('/dash', { scroll: false })
+      return
+    }
+
+    const finalizeCheckout = async () => {
+      try {
+        setCheckoutStatus('loading')
+        setCheckoutError('')
+        setCheckoutNotice(null)
+
+        const response = await fetch('/api/checkout/finalize', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sessionId: sessionIdParam, outcome: normalizedOutcome }),
+        })
+
+        const data = await response.json().catch(() => null)
+
+        if (response.ok) {
+          const message =
+            typeof data?.message === 'string' && data.message.length > 0
+              ? data.message
+              : normalizedOutcome === 'success'
+                ? 'Thanks! Your subscription is confirmed. We will follow up with scheduling details soon.'
+                : 'Checkout was cancelled. Your selections are still saved so you can try again anytime.'
+
+          setCheckoutNotice({
+            type: normalizedOutcome === 'success' ? 'success' : 'info',
+            message,
+          })
+        } else {
+          const message =
+            typeof data?.error === 'string' && data.error.length > 0
+              ? data.error
+              : 'We could not finalize your checkout. Please try again or contact support.'
+
+          setCheckoutNotice({
+            type: 'error',
+            message,
+          })
+        }
+      } catch (error) {
+        setCheckoutNotice({
+          type: 'error',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'We could not finalize your checkout. Please try again or contact support.',
+        })
+      } finally {
+        setCheckoutStatus('idle')
+      }
+    }
+
+    finalizeCheckout().finally(() => {
+      router.replace('/dash', { scroll: false })
+    })
+  }, [router, searchParams])
+
+  useEffect(() => {
     if (checkoutError) {
       setCheckoutError('')
     }
@@ -446,6 +555,7 @@ export function DashboardShell({ user, initialAddresses }: DashboardShellProps) 
     try {
       setCheckoutStatus('loading')
       setCheckoutError('')
+      setCheckoutNotice(null)
 
       const response = await fetch('/api/checkout', {
         method: 'POST',
@@ -646,11 +756,23 @@ export function DashboardShell({ user, initialAddresses }: DashboardShellProps) 
               >
                 Add new service
               </Button>
-              <Button type="button" variant="outline" color="white" onClick={openAddressModal}>
+              <Button type="button" variant="outline" onClick={openAddressModal}>
                 Manage addresses
               </Button>
             </div>
           </div>
+
+          {checkoutNotice ? (
+            <div
+              role={checkoutNotice.type === 'error' ? 'alert' : 'status'}
+              className={classNames(
+                'mt-6 rounded-xl border px-4 py-3 text-sm shadow-sm',
+                noticeToneStyles[checkoutNotice.type],
+              )}
+            >
+              <p>{checkoutNotice.message}</p>
+            </div>
+          ) : null}
 
           <div className="mt-8 grid gap-8 lg:grid-cols-3">
             <section className="lg:col-span-2">
@@ -875,7 +997,7 @@ export function DashboardShell({ user, initialAddresses }: DashboardShellProps) 
                       ) : null}
                     </div>
                     <div className="flex flex-col gap-3 sm:flex-row">
-                      <Button type="submit" variant="outline" color="white">
+                      <Button type="submit" variant="outline">
                         Save subscription
                       </Button>
                       <Button

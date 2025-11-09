@@ -33,7 +33,14 @@ export interface StripeCheckoutOptions {
   metadata?: Record<string, string | null | undefined>
 }
 
-export async function createStripeCheckoutSession(options: StripeCheckoutOptions) {
+export interface StripeCheckoutSessionResponse {
+  id: string
+  url: string
+}
+
+export async function createStripeCheckoutSession(
+  options: StripeCheckoutOptions,
+): Promise<StripeCheckoutSessionResponse> {
   const secretKey = getStripeSecretKey()
 
   const params = new URLSearchParams()
@@ -85,19 +92,97 @@ export async function createStripeCheckoutSession(options: StripeCheckoutOptions
     body: params.toString(),
   })
 
-  const data = (await response.json()) as { url?: string; error?: { message?: string } }
+  const data = (await response.json()) as {
+    id?: string
+    url?: string
+    error?: { message?: string }
+  }
 
   if (!response.ok) {
     throw new Error(data.error?.message ?? 'Stripe returned an error response.')
   }
 
-  if (!data.url) {
-    throw new Error('Stripe did not return a checkout URL.')
+  if (!data.url || !data.id) {
+    throw new Error('Stripe did not return a checkout session identifier.')
   }
 
-  return data
+  return { id: data.id, url: data.url }
 }
 
-export function getAppBaseUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+export interface StripeCheckoutSessionDetails {
+  id: string
+  status: string | null
+  payment_status: string | null
+  customer?: string | null
+  subscription?: string | null
+  metadata?: Record<string, string | null | undefined>
+}
+
+export async function retrieveStripeCheckoutSession(
+  sessionId: string,
+): Promise<StripeCheckoutSessionDetails> {
+  const secretKey = getStripeSecretKey()
+
+  const response = await fetch(`${STRIPE_API_BASE}/checkout/sessions/${sessionId}`, {
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+    },
+  })
+
+  const data = (await response.json()) as {
+    id?: string
+    status?: string | null
+    payment_status?: string | null
+    customer?: string | null
+    subscription?: string | null
+    metadata?: Record<string, string | null | undefined>
+    error?: { message?: string }
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error?.message ?? 'Stripe returned an error response.')
+  }
+
+  if (!data.id) {
+    throw new Error('Stripe did not return the checkout session details requested.')
+  }
+
+  return {
+    id: data.id,
+    status: data.status ?? null,
+    payment_status: data.payment_status ?? null,
+    customer: data.customer ?? null,
+    subscription: data.subscription ?? null,
+    metadata: data.metadata ?? {},
+  }
+}
+
+function normalizeBaseUrl(value: string) {
+  return value.replace(/\/?$/, '')
+}
+
+export function getAppBaseUrl(source?: Request | URL | string | null) {
+  if (source) {
+    try {
+      const parsed =
+        typeof source === 'string'
+          ? new URL(source)
+          : source instanceof URL
+            ? source
+            : new URL(source.url)
+
+      if (parsed.origin) {
+        return normalizeBaseUrl(parsed.origin)
+      }
+    } catch (error) {
+      console.warn('Failed to derive app base URL from source', error)
+    }
+  }
+
+  const envBase = process.env.NEXT_PUBLIC_APP_URL?.trim()
+  if (envBase) {
+    return normalizeBaseUrl(envBase)
+  }
+
+  return 'http://localhost:3000'
 }

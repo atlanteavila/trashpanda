@@ -1,0 +1,150 @@
+import { CheckoutStatus } from '@prisma/client'
+import { NextResponse } from 'next/server'
+
+import { auth } from '@/lib/auth'
+import prisma from '@/lib/prisma'
+import { retrieveStripeCheckoutSession } from '@/lib/stripe'
+
+type FinalizeOutcome = 'success' | 'cancelled'
+
+type FinalizeRequestPayload = {
+  sessionId?: string
+  outcome?: FinalizeOutcome
+}
+
+function normalizeSessionId(value: string | undefined | null) {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+export async function POST(request: Request) {
+  const session = await auth()
+
+  if (!session?.user) {
+    return NextResponse.json({ error: 'You must be signed in to finalize checkout.' }, { status: 401 })
+  }
+
+  let payload: FinalizeRequestPayload
+
+  try {
+    payload = (await request.json()) as FinalizeRequestPayload
+  } catch (error) {
+    return NextResponse.json({ error: 'Invalid request payload.' }, { status: 400 })
+  }
+
+  const outcome = payload.outcome
+
+  if (outcome !== 'success' && outcome !== 'cancelled') {
+    return NextResponse.json({ error: 'Provide a valid checkout outcome.' }, { status: 400 })
+  }
+
+  const sessionId = normalizeSessionId(payload.sessionId)
+
+  if (!sessionId) {
+    const message =
+      outcome === 'success'
+        ? 'Missing Stripe session identifier. Please contact support to confirm your checkout.'
+        : 'Checkout was cancelled before a session could be created.'
+    return NextResponse.json({ error: message }, { status: 400 })
+  }
+
+  let checkoutRecord = await prisma.checkoutSession.findFirst({
+    where: {
+      userId: session.user.id,
+      stripeSessionId: sessionId,
+    },
+  })
+
+  let stripeSession: Awaited<ReturnType<typeof retrieveStripeCheckoutSession>> | null = null
+
+  if (!checkoutRecord || outcome === 'success') {
+    try {
+      stripeSession = await retrieveStripeCheckoutSession(sessionId)
+    } catch (error) {
+      console.error('Failed to retrieve Stripe checkout session', error)
+      if (outcome === 'success') {
+        return NextResponse.json(
+          {
+            error:
+              'We could not verify your checkout with Stripe. Please reach out to support so we can confirm your subscription.',
+          },
+          { status: 502 },
+        )
+      }
+    }
+  }
+
+  const metadataCheckoutId = stripeSession?.metadata?.checkoutSessionId
+
+  if (!checkoutRecord && metadataCheckoutId) {
+    checkoutRecord = await prisma.checkoutSession.findFirst({
+      where: {
+        id: metadataCheckoutId,
+        userId: session.user.id,
+      },
+    })
+
+    if (checkoutRecord && !checkoutRecord.stripeSessionId) {
+      checkoutRecord = await prisma.checkoutSession.update({
+        where: { id: checkoutRecord.id },
+        data: { stripeSessionId: sessionId },
+      })
+    }
+  }
+
+  if (!checkoutRecord) {
+    return NextResponse.json(
+      { error: 'We could not locate the checkout session you attempted to finalize.' },
+      { status: 404 },
+    )
+  }
+
+  if (outcome === 'cancelled') {
+    if (checkoutRecord.status !== CheckoutStatus.COMPLETED) {
+      await prisma.checkoutSession.update({
+        where: { id: checkoutRecord.id },
+        data: {
+          status: CheckoutStatus.CANCELLED,
+          completedAt: new Date(),
+        },
+      })
+    }
+
+    return NextResponse.json({
+      status: 'cancelled',
+      message: 'Checkout was cancelled. Your selections are still saved so you can try again anytime.',
+    })
+  }
+
+  if (checkoutRecord.status === CheckoutStatus.COMPLETED) {
+    return NextResponse.json({
+      status: 'completed',
+      message: 'Your subscription details are already confirmed. We will be in touch shortly!',
+    })
+  }
+
+  const stripeStatus = stripeSession?.status ?? null
+  const stripePaymentStatus = stripeSession?.payment_status ?? null
+  const stripeCustomerId =
+    stripeSession && typeof stripeSession.customer === 'string' ? stripeSession.customer : null
+  const stripeSubscriptionId =
+    stripeSession && typeof stripeSession.subscription === 'string' ? stripeSession.subscription : null
+
+  await prisma.checkoutSession.update({
+    where: { id: checkoutRecord.id },
+    data: {
+      status: CheckoutStatus.COMPLETED,
+      completedAt: new Date(),
+      stripeStatus,
+      stripePaymentStatus,
+      stripeCustomerId,
+      stripeSubscriptionId,
+    },
+  })
+
+  return NextResponse.json({
+    status: 'completed',
+    message: 'Thanks! Your subscription is confirmed. We will follow up with scheduling details soon.',
+    stripeStatus,
+    stripePaymentStatus,
+  })
+}
