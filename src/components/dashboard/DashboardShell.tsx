@@ -470,7 +470,13 @@ export function DashboardShell({ user, initialAddresses }: DashboardShellProps) 
 
       if (!response.ok) {
         const errorPayload = await response.json().catch(() => null)
-        throw new Error(errorPayload?.error ?? 'Unable to start checkout.')
+        const message =
+          typeof errorPayload?.error === 'string' && errorPayload.error.length > 0
+            ? errorPayload.error
+            : 'Unable to start checkout. Please try again.'
+        setCheckoutError(message)
+        setCheckoutStatus('idle')
+        return
       }
 
       const data = (await response.json()) as { url?: string }
@@ -479,10 +485,13 @@ export function DashboardShell({ user, initialAddresses }: DashboardShellProps) 
         return
       }
 
-      throw new Error('Checkout session missing redirect URL.')
+      setCheckoutError('Checkout could not start because the session was missing a redirect URL.')
     } catch (error) {
       console.error('Failed to begin checkout', error)
-      setCheckoutError(error instanceof Error ? error.message : 'Unable to start checkout.')
+      setCheckoutError(
+        error instanceof Error ? error.message : 'Unable to start checkout. Please try again.',
+      )
+    } finally {
       setCheckoutStatus('idle')
     }
   }, [activeAddress, activePlanId, checkoutStatus, monthlyTotal, planName, selectedServiceList])
