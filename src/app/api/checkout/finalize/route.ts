@@ -1,8 +1,8 @@
-import { CheckoutStatus } from '@prisma/client'
+import { CheckoutStatus, SubscriptionStatus } from '@prisma/client'
 import { NextResponse } from 'next/server'
 
 import { auth } from '@/lib/auth'
-import { requireCheckoutSessionDelegate } from '@/lib/prisma'
+import { requireCheckoutSessionDelegate, requireSubscriptionDelegate } from '@/lib/prisma'
 import { retrieveStripeCheckoutSession } from '@/lib/stripe'
 
 type FinalizeOutcome = 'success' | 'cancelled'
@@ -154,6 +154,48 @@ export async function POST(request: Request) {
       stripeSubscriptionId,
     },
   })
+
+  try {
+    const subscriptions = requireSubscriptionDelegate()
+    const services = Array.isArray(checkoutRecord.services) ? checkoutRecord.services : []
+    const subscriptionPayload = {
+      userId: session.user.id,
+      planId: checkoutRecord.planId ?? null,
+      planName: checkoutRecord.planName ?? null,
+      addressId: checkoutRecord.addressId ?? null,
+      addressLabel: checkoutRecord.addressLabel ?? null,
+      addressStreet: checkoutRecord.addressStreet,
+      addressCity: checkoutRecord.addressCity,
+      addressState: checkoutRecord.addressState,
+      addressPostalCode: checkoutRecord.addressPostalCode,
+      services,
+      monthlyTotal: checkoutRecord.monthlyTotal ?? null,
+      status: SubscriptionStatus.ACTIVE,
+      stripeCustomerId,
+      stripeSubscriptionId,
+      stripeStatus,
+      stripePaymentStatus,
+    }
+
+    if (stripeSubscriptionId) {
+      const existing = await subscriptions.findFirst({
+        where: { stripeSubscriptionId },
+      })
+
+      if (existing) {
+        await subscriptions.update({
+          where: { id: existing.id },
+          data: subscriptionPayload,
+        })
+      } else {
+        await subscriptions.create({ data: subscriptionPayload })
+      }
+    } else {
+      await subscriptions.create({ data: subscriptionPayload })
+    }
+  } catch (error) {
+    console.error('Failed to sync subscription data after checkout completion', error)
+  }
 
   return NextResponse.json({
     status: 'completed',

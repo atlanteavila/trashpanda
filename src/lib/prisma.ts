@@ -12,16 +12,29 @@ if (process.env.NODE_ENV !== 'production') {
 
 export default prisma
 
-type PrismaWithCheckoutSessions = PrismaClient & {
+type PrismaWithDashboardModels = PrismaClient & {
   checkoutSession?: Prisma.CheckoutSessionDelegate<false>
+  subscription?: Prisma.SubscriptionDelegate<false>
 }
 
 export function requireCheckoutSessionDelegate() {
-  const delegate = (prisma as PrismaWithCheckoutSessions).checkoutSession
+  const delegate = (prisma as PrismaWithDashboardModels).checkoutSession
 
   if (!delegate) {
     throw new Error(
       'Prisma client is missing the CheckoutSession model. Run `npx prisma generate` and restart the server.',
+    )
+  }
+
+  return delegate
+}
+
+export function requireSubscriptionDelegate() {
+  const delegate = (prisma as PrismaWithDashboardModels).subscription
+
+  if (!delegate) {
+    throw new Error(
+      'Prisma client is missing the Subscription model. Run `npx prisma generate` and restart the server.',
     )
   }
 

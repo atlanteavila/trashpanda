@@ -141,6 +141,7 @@ export async function POST(request: Request) {
       userId: session.user.id,
       planId: payload.planId ?? null,
       planName: payload.planName ?? null,
+      addressId: addressPayload.id ?? null,
       addressLabel: label,
       addressStreet: street,
       addressCity: city,
@@ -170,8 +171,8 @@ export async function POST(request: Request) {
         notes: service.notes,
       })),
       customerEmail: session.user.email ?? null,
-      successUrl: `${baseUrl}/dash?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${baseUrl}/dash?checkout=cancelled&session_id={CHECKOUT_SESSION_ID}`,
+      successUrl: `${baseUrl}/dash/add?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${baseUrl}/dash/add?checkout=cancelled&session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         userId: session.user.id,
         planId: payload.planId ?? '',
