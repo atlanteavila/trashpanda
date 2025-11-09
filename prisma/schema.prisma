@@ -19,6 +19,8 @@ model User {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   addresses      Address[]
+  checkoutSessions CheckoutSession[]
+  subscriptions  Subscription[]
   accounts       Account[]
   sessions       Session[]
 }
@@ -74,4 +76,72 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model CheckoutSession {
+  id                   String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId               String          @db.ObjectId
+  user                 User            @relation(fields: [userId], references: [id])
+  stripeSessionId      String?
+  status               CheckoutStatus  @default(PENDING)
+  planId               String?
+  planName             String?
+  addressId            String?
+  addressLabel         String?
+  addressStreet        String
+  addressCity          String
+  addressState         String
+  addressPostalCode    String
+  addressSummary       String
+  services             Json
+  monthlyTotal         Float?
+  stripeStatus         String?
+  stripePaymentStatus  String?
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  completedAt          DateTime?
+
+  @@index([userId])
+  @@index([stripeSessionId])
+}
+
+enum CheckoutStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+model Subscription {
+  id                   String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId               String             @db.ObjectId
+  user                 User               @relation(fields: [userId], references: [id])
+  planId               String?
+  planName             String?
+  addressId            String?
+  addressLabel         String?
+  addressStreet        String
+  addressCity          String
+  addressState         String
+  addressPostalCode    String
+  services             Json
+  monthlyTotal         Float?
+  status               SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  stripeStatus         String?
+  stripePaymentStatus  String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  cancelledAt          DateTime?
+
+  @@index([userId])
+  @@index([stripeSubscriptionId])
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
 }

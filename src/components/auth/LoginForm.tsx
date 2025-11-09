@@ -51,7 +51,7 @@ export function LoginForm({
     }
 
     form.reset()
-    router.replace('/')
+    router.replace('/dash')
     router.refresh()
   }
 
