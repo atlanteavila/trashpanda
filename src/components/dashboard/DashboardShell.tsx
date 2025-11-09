@@ -363,7 +363,7 @@ export function DashboardShell({
   }, [selectedServices])
 
   const planSummaries = useMemo(() => {
-    return planPresets.map((plan) => {
+    return planPresets.map((plan: any) => {
       const planTotal = calculateMonthlyTotal(
         serviceCatalog.reduce((acc, service) => {
           const presetConfig = plan.configuration[service.id]
@@ -646,7 +646,7 @@ export function DashboardShell({
     setAddresses((prev) => {
       const base = buildInitialAddresses(initialAddresses, activeSubscription)
       const custom = prev.filter((address) => !initialAddresses.some((existing) => existing.id === address.id))
-      for (const extra of custom) {
+      for (const extra of custom as any) {
         if (!base.some((address) => address.id === extra.id)) {
           base.push(extra)
         }
@@ -1074,9 +1074,9 @@ export function DashboardShell({
               </div>
 
               <div className="border-b border-gray-900/10 pb-12 dark:border-white/10">
-                <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">Bundle presets</h2>
+                <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">Bundle and save!</h2>
                 <p className="mt-1 text-sm/6 text-gray-600 dark:text-gray-400">
-                  Start with a curated bundle, then fine-tune the details to match your home.
+                  Start with a curated bundles that allow you to save on a montly basis!
                 </p>
 
                 <div className="mt-10 grid gap-6 lg:grid-cols-2">
