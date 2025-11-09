@@ -256,28 +256,37 @@ export function DashboardShell({ user }: DashboardShellProps) {
     })
   }, [calculateMonthlyTotal])
 
-  const handleSelectPlan = useCallback((plan: BundlePreset) => {
-    setSelectedServices((prev) => {
-      const nextConfiguration = { ...prev }
-      for (const service of serviceCatalog) {
-        nextConfiguration[service.id] = {
-          active: Boolean(service.required),
-          quantity: service.defaultQuantity ?? 1,
-        }
+  const handleSelectPlan = useCallback(
+    (plan: BundlePreset) => {
+      if (activePlanId === plan.id) {
+        setActivePlanId(null)
+        setFormStatus('idle')
+        return
       }
-      for (const [serviceId, config] of Object.entries(plan.configuration) as Array<
-        [ServiceId, ServiceSelection]
-      >) {
-        nextConfiguration[serviceId] = {
-          active: config.active,
-          quantity: config.quantity,
+
+      setSelectedServices((prev) => {
+        const nextConfiguration = { ...prev }
+        for (const service of serviceCatalog) {
+          nextConfiguration[service.id] = {
+            active: Boolean(service.required),
+            quantity: service.defaultQuantity ?? 1,
+          }
         }
-      }
-      return nextConfiguration
-    })
-    setActivePlanId(plan.id)
-    setFormStatus('idle')
-  }, [])
+        for (const [serviceId, config] of Object.entries(plan.configuration) as Array<
+          [ServiceId, ServiceSelection]
+        >) {
+          nextConfiguration[serviceId] = {
+            active: config.active,
+            quantity: config.quantity,
+          }
+        }
+        return nextConfiguration
+      })
+      setActivePlanId(plan.id)
+      setFormStatus('idle')
+    },
+    [activePlanId],
+  )
 
   const handleToggleService = useCallback((serviceId: ServiceId, active: boolean) => {
     setSelectedServices((prev) => {
@@ -375,7 +384,7 @@ export function DashboardShell({ user }: DashboardShellProps) {
   const greeting = user.firstName ? `Hello ${user.firstName}!` : 'Welcome back!'
 
   return (
-    <div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <Dialog open={sidebarOpen} onClose={setSidebarOpen} className="relative z-50 lg:hidden">
         <DialogBackdrop
           transition
@@ -532,7 +541,11 @@ export function DashboardShell({ user }: DashboardShellProps) {
 
           <div className="mt-8 grid gap-8 lg:grid-cols-3">
             <section className="lg:col-span-2">
-              <form id="service-form" onSubmit={handleSubmit} className="space-y-12">
+              <form
+                id="service-form"
+                onSubmit={handleSubmit}
+                className="space-y-12 rounded-2xl border border-gray-200 bg-white p-8 shadow-sm dark:border-white/10 dark:bg-slate-900"
+              >
                 <div className="border-b border-gray-900/10 pb-12 dark:border-white/10">
                   <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">Service address</h2>
                   <p className="mt-1 text-sm/6 text-gray-600 dark:text-gray-400">
@@ -582,16 +595,18 @@ export function DashboardShell({ user }: DashboardShellProps) {
                   </p>
 
                   <div className="mt-10 grid gap-6 lg:grid-cols-2">
-                    {planSummaries.map((plan) => (
-                      <div
-                        key={plan.id}
-                        className={classNames(
-                          'rounded-lg border p-6 transition',
-                          activePlanId === plan.id
-                            ? 'border-indigo-500 bg-indigo-50/50 dark:border-indigo-400 dark:bg-indigo-500/10'
-                            : 'border-gray-200 hover:border-indigo-300 dark:border-white/10 dark:hover:border-indigo-400',
-                        )}
-                      >
+                    {planSummaries.map((plan) => {
+                      const isActive = activePlanId === plan.id
+                      return (
+                        <div
+                          key={plan.id}
+                          className={classNames(
+                            'rounded-xl border bg-white p-6 shadow-sm transition-colors dark:bg-slate-900',
+                            isActive
+                              ? 'border-indigo-500 ring-2 ring-indigo-200 dark:border-indigo-400 dark:ring-indigo-500/40'
+                              : 'border-gray-200 hover:border-indigo-300 hover:shadow-md dark:border-white/10 dark:hover:border-indigo-400 dark:hover:shadow-lg',
+                          )}
+                        >
                         <div className="flex items-start justify-between gap-4">
                           <div>
                             <h3 className="text-base font-semibold text-gray-900 dark:text-white">{plan.name}</h3>
@@ -601,16 +616,22 @@ export function DashboardShell({ user }: DashboardShellProps) {
                             ${plan.total.toFixed(2)}/mo
                           </span>
                         </div>
-                        <Button
-                          type="button"
-                          color="green"
-                          className="mt-6 w-full"
-                          onClick={() => handleSelectPlan(plan)}
-                        >
-                          Use this plan
-                        </Button>
-                      </div>
-                    ))}
+                          <Button
+                            type="button"
+                            color="green"
+                            aria-pressed={isActive}
+                            className={classNames(
+                              'mt-6 w-full',
+                              isActive &&
+                                'bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800 active:bg-green-200 active:text-green-900',
+                            )}
+                            onClick={() => handleSelectPlan(plan)}
+                          >
+                            {isActive ? 'Selected — click to clear' : 'Use this plan'}
+                          </Button>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
 
@@ -633,7 +654,7 @@ export function DashboardShell({ user }: DashboardShellProps) {
                       return (
                         <div
                           key={service.id}
-                          className="rounded-lg border border-gray-200 p-6 dark:border-white/10"
+                          className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900"
                         >
                           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                             <div>
@@ -734,7 +755,7 @@ export function DashboardShell({ user }: DashboardShellProps) {
             </section>
 
             <aside className="space-y-6">
-              <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5">
+              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">Selected services</h2>
                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                   Here is what we will schedule for {addresses.find((address) => address.id === selectedAddressId)?.label ?? 'your home'}.
@@ -762,9 +783,9 @@ export function DashboardShell({ user }: DashboardShellProps) {
                 </ul>
               </div>
 
-              <div className="rounded-lg border border-indigo-500/40 bg-indigo-50/60 p-6 dark:border-indigo-400/40 dark:bg-indigo-500/10">
-                <h3 className="text-base font-semibold text-indigo-900 dark:text-indigo-200">Need a seasonal boost?</h3>
-                <p className="mt-2 text-sm text-indigo-900/80 dark:text-indigo-200/80">
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50/90 p-6 shadow-sm dark:border-indigo-500/40 dark:bg-indigo-900/40">
+                <h3 className="text-base font-semibold text-indigo-900 dark:text-indigo-100">Need a seasonal boost?</h3>
+                <p className="mt-2 text-sm text-indigo-900/80 dark:text-indigo-100/80">
                   Add a fall yard raking visit to stay ahead of leaf build-up. It averages just $8.33/month when spread across the season.
                 </p>
                 <Button
