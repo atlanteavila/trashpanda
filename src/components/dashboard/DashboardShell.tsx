@@ -1,6 +1,6 @@
 "use client"
 
-import { FormEvent, useCallback, useMemo, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Dialog,
   DialogBackdrop,
@@ -30,9 +30,9 @@ const navigation = [
   { name: 'Reports', href: '#', icon: ChartPieIcon },
 ] as const
 
-interface Address {
+interface DashboardAddress {
   id: string
-  label: string
+  label?: string | null
   street: string
   city: string
   state: string
@@ -69,6 +69,16 @@ interface BundlePreset {
   name: string
   description: string
   configuration: Partial<Record<ServiceId, ServiceSelection>>
+}
+
+interface SelectedServiceDetail {
+  id: ServiceId
+  name: string
+  quantity: number
+  notes?: string
+  monthlyRate: number
+  lineTotal: number
+  frequency: string
 }
 
 const serviceCatalog: ServiceDefinition[] = [
@@ -160,25 +170,27 @@ function createAddressId() {
 
 interface DashboardShellProps {
   user: Session['user']
+  initialAddresses: DashboardAddress[]
 }
 
-export function DashboardShell({ user }: DashboardShellProps) {
+export function DashboardShell({ user, initialAddresses }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activePlanId, setActivePlanId] = useState<string | null>(null)
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [addressError, setAddressError] = useState('')
   const [formStatus, setFormStatus] = useState<'idle' | 'saved'>('idle')
-  const [addresses, setAddresses] = useState<Address[]>(() => [
-    {
-      id: 'primary',
-      label: 'Home',
-      street: '123 Peachtree St NE',
-      city: 'Atlanta',
-      state: 'GA',
-      postalCode: '30303',
-    },
-  ])
-  const [selectedAddressId, setSelectedAddressId] = useState('primary')
+  const [addresses, setAddresses] = useState<DashboardAddress[]>(() => {
+    if (initialAddresses.length > 0) {
+      return initialAddresses.map((address, index) => ({
+        ...address,
+        label: address.label?.trim() ?? (index === 0 ? 'Home' : `Location ${index + 1}`),
+      }))
+    }
+    return []
+  })
+  const [selectedAddressId, setSelectedAddressId] = useState(
+    initialAddresses[0]?.id ?? '',
+  )
   const [addressFormState, setAddressFormState] = useState({
     label: '',
     street: '',
@@ -186,6 +198,8 @@ export function DashboardShell({ user }: DashboardShellProps) {
     state: '',
     postalCode: '',
   })
+  const [checkoutStatus, setCheckoutStatus] = useState<'idle' | 'loading'>('idle')
+  const [checkoutError, setCheckoutError] = useState('')
 
   const [selectedServices, setSelectedServices] = useState<Record<ServiceId, ServiceSelection>>(() => {
     return serviceCatalog.reduce((acc, service) => {
@@ -218,7 +232,7 @@ export function DashboardShell({ user }: DashboardShellProps) {
     selectedServices,
   ])
 
-  const selectedServiceList = useMemo(() => {
+  const selectedServiceList = useMemo<SelectedServiceDetail[]>(() => {
     return serviceCatalog
       .filter((service) => selectedServices[service.id]?.active)
       .map((service) => {
@@ -232,6 +246,7 @@ export function DashboardShell({ user }: DashboardShellProps) {
           notes: service.notes,
           monthlyRate: service.monthlyRate,
           lineTotal,
+          frequency: service.frequency,
         }
       })
   }, [selectedServices])
@@ -255,6 +270,18 @@ export function DashboardShell({ user }: DashboardShellProps) {
       }
     })
   }, [calculateMonthlyTotal])
+
+  const activeAddress = useMemo(
+    () => addresses.find((address) => address.id === selectedAddressId) ?? null,
+    [addresses, selectedAddressId],
+  )
+
+  const activePlan = activePlanId
+    ? planSummaries.find((plan) => plan.id === activePlanId) ?? null
+    : null
+
+  const hasServices = selectedServiceList.length > 0
+  const planName = activePlan?.name ?? null
 
   const handleSelectPlan = useCallback(
     (plan: BundlePreset) => {
@@ -336,14 +363,14 @@ export function DashboardShell({ user }: DashboardShellProps) {
   const openAddressModal = useCallback(() => {
     setAddressError('')
     setAddressFormState({
-      label: '',
+      label: addresses.length === 0 ? 'Home' : '',
       street: '',
       city: '',
       state: '',
       postalCode: '',
     })
     setIsAddressModalOpen(true)
-  }, [])
+  }, [addresses.length])
 
   const closeAddressModal = useCallback(() => {
     setIsAddressModalOpen(false)
@@ -353,18 +380,30 @@ export function DashboardShell({ user }: DashboardShellProps) {
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault()
       const { label, street, city, state, postalCode } = addressFormState
-      if (!label || !street || !city || !state || !postalCode) {
+      const trimmedLabel = label.trim()
+      const trimmedStreet = street.trim()
+      const trimmedCity = city.trim()
+      const trimmedState = state.trim().toUpperCase()
+      const trimmedPostalCode = postalCode.trim()
+
+      if (
+        !trimmedLabel ||
+        !trimmedStreet ||
+        !trimmedCity ||
+        !trimmedState ||
+        !trimmedPostalCode
+      ) {
         setAddressError('Please complete every address field before saving.')
         return
       }
 
-      const newAddress: Address = {
+      const newAddress: DashboardAddress = {
         id: createAddressId(),
-        label,
-        street,
-        city,
-        state,
-        postalCode,
+        label: trimmedLabel,
+        street: trimmedStreet,
+        city: trimmedCity,
+        state: trimmedState,
+        postalCode: trimmedPostalCode,
       }
 
       setAddresses((prev) => [...prev, newAddress])
@@ -382,6 +421,71 @@ export function DashboardShell({ user }: DashboardShellProps) {
 
   const userInitial = user.firstName ? user.firstName.charAt(0).toUpperCase() : '?'
   const greeting = user.firstName ? `Hello ${user.firstName}!` : 'Welcome back!'
+
+  useEffect(() => {
+    if (checkoutError) {
+      setCheckoutError('')
+    }
+  }, [addresses, checkoutError, selectedAddressId, selectedServices])
+
+  const handleCheckout = useCallback(async () => {
+    if (checkoutStatus === 'loading') {
+      return
+    }
+
+    if (selectedServiceList.length === 0) {
+      setCheckoutError('Please add at least one service before checking out.')
+      return
+    }
+
+    if (!activeAddress) {
+      setCheckoutError('Please add a service address before checking out.')
+      return
+    }
+
+    try {
+      setCheckoutStatus('loading')
+      setCheckoutError('')
+
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          services: selectedServiceList.map((service) => ({
+            id: service.id,
+            name: service.name,
+            quantity: service.quantity,
+            monthlyRate: service.monthlyRate,
+            frequency: service.frequency,
+            notes: service.notes,
+          })),
+          address: activeAddress,
+          planId: activePlanId,
+          planName,
+          total: monthlyTotal,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null)
+        throw new Error(errorPayload?.error ?? 'Unable to start checkout.')
+      }
+
+      const data = (await response.json()) as { url?: string }
+      if (data?.url) {
+        window.location.href = data.url
+        return
+      }
+
+      throw new Error('Checkout session missing redirect URL.')
+    } catch (error) {
+      console.error('Failed to begin checkout', error)
+      setCheckoutError(error instanceof Error ? error.message : 'Unable to start checkout.')
+      setCheckoutStatus('idle')
+    }
+  }, [activeAddress, activePlanId, checkoutStatus, monthlyTotal, planName, selectedServiceList])
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -533,7 +637,7 @@ export function DashboardShell({ user }: DashboardShellProps) {
               >
                 Add new service
               </Button>
-              <Button type="button" variant="outline" onClick={openAddressModal}>
+              <Button type="button" variant="outline" color="white" onClick={openAddressModal}>
                 Manage addresses
               </Button>
             </div>
@@ -566,14 +670,24 @@ export function DashboardShell({ user }: DashboardShellProps) {
                           name="address"
                           value={selectedAddressId}
                           onChange={(event) => setSelectedAddressId(event.target.value)}
-                          className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:*:bg-gray-800 dark:focus:outline-indigo-500"
+                          disabled={addresses.length === 0}
+                          className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:*:bg-gray-800 dark:focus:outline-indigo-500 dark:disabled:bg-white/10 dark:disabled:text-gray-500"
                         >
-                          {addresses.map((address) => (
-                            <option key={address.id} value={address.id}>
-                              {address.label} – {address.street}, {address.city}
-                            </option>
-                          ))}
+                          {addresses.length === 0 ? (
+                            <option value="">Add an address to continue</option>
+                          ) : (
+                            addresses.map((address) => (
+                              <option key={address.id} value={address.id}>
+                                {address.label} – {address.street}, {address.city}, {address.state}
+                              </option>
+                            ))
+                          )}
                         </select>
+                        {addresses.length === 0 ? (
+                          <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                            Add an address to enable scheduling and checkout.
+                          </p>
+                        ) : null}
                       </div>
                     </div>
                     <div className="col-span-full">
@@ -742,13 +856,28 @@ export function DashboardShell({ user }: DashboardShellProps) {
                     </div>
                   </div>
 
-                  <div className="mt-6 flex items-center justify-end gap-x-6">
-                    {formStatus === 'saved' ? (
-                      <p className="text-sm text-green-600 dark:text-green-400">Preferences saved.</p>
-                    ) : null}
-                    <Button type="submit" color="green">
-                      Save subscription
-                    </Button>
+                  <div className="mt-6 space-y-4 sm:flex sm:items-center sm:justify-between sm:space-y-0">
+                    <div className="space-y-2 text-sm">
+                      {formStatus === 'saved' ? (
+                        <p className="text-green-600 dark:text-green-400">Preferences saved.</p>
+                      ) : null}
+                      {checkoutError ? (
+                        <p className="text-red-600 dark:text-red-400">{checkoutError}</p>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <Button type="submit" variant="outline" color="white">
+                        Save subscription
+                      </Button>
+                      <Button
+                        type="button"
+                        color="green"
+                        disabled={!hasServices || !activeAddress || checkoutStatus === 'loading'}
+                        onClick={handleCheckout}
+                      >
+                        {checkoutStatus === 'loading' ? 'Redirecting…' : 'Proceed to checkout'}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </form>
@@ -756,16 +885,27 @@ export function DashboardShell({ user }: DashboardShellProps) {
 
             <aside className="space-y-6">
               <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
-                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Selected services</h2>
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Your cart</h2>
+                {activePlan ? (
+                  <p className="mt-1 text-xs uppercase tracking-wide text-indigo-600 dark:text-indigo-300">
+                    Bundle preset: {activePlan.name}
+                  </p>
+                ) : null}
                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  Here is what we will schedule for {addresses.find((address) => address.id === selectedAddressId)?.label ?? 'your home'}.
+                  Here is what we will schedule for {activeAddress?.label ?? 'your home'}.
                 </p>
+                {activeAddress ? (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {activeAddress.street}, {activeAddress.city}, {activeAddress.state} {activeAddress.postalCode}
+                  </p>
+                ) : null}
                 <ul className="mt-4 space-y-3">
                   {selectedServiceList.length > 0 ? (
                     selectedServiceList.map((service) => (
                       <li key={service.id} className="flex justify-between text-sm">
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">{service.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{service.frequency}</p>
                           {service.quantity > 1 ? (
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                               {service.quantity} × ${service.monthlyRate.toFixed(2)}
