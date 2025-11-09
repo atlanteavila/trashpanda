@@ -34,12 +34,12 @@ export default function RootLayout({
     <html
       lang="en"
       className={clsx(
-        'h-full scroll-smooth bg-slate-100 antialiased dark:bg-slate-950',
+        'h-full scroll-smooth bg-white antialiased dark:bg-gray-900',
         inter.variable,
         lexend.variable,
       )}
     >
-      <body className="flex h-full flex-col bg-slate-100 dark:bg-slate-950">{children}</body>
+      <body className="flex h-full flex-col bg-white dark:bg-gray-900">{children}</body>
     </html>
   )
 }
