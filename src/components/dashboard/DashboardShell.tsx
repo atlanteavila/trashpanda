@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react'
+import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import type { Session } from 'next-auth'
 import type { SubscriptionStatus } from '@prisma/client'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -190,6 +191,38 @@ const subscriptionStatusOptions: Array<{
     description: 'Close this plan. We will stop service after the current cycle.',
   },
 ]
+
+const subscriptionStatusDisplay: Record<
+  SubscriptionStatus,
+  {
+    label: string
+    indicatorClass: string
+    badgeClass: string
+    description: string
+  }
+> = {
+  ACTIVE: {
+    label: 'Active',
+    indicatorClass: 'bg-green-100 text-green-600 dark:bg-green-400/20 dark:text-green-300',
+    badgeClass:
+      'bg-green-50 text-green-600 ring-green-600/10 dark:bg-green-400/10 dark:text-green-300 dark:ring-green-300/30',
+    description: 'Billing in progress',
+  },
+  PAUSED: {
+    label: 'Paused',
+    indicatorClass: 'bg-amber-100 text-amber-600 dark:bg-amber-400/20 dark:text-amber-300',
+    badgeClass:
+      'bg-amber-50 text-amber-600 ring-amber-600/10 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-300/30',
+    description: 'Service is on hold',
+  },
+  CANCELLED: {
+    label: 'Cancelled',
+    indicatorClass: 'bg-rose-100 text-rose-600 dark:bg-rose-400/20 dark:text-rose-300',
+    badgeClass:
+      'bg-rose-50 text-rose-600 ring-rose-600/10 dark:bg-rose-400/10 dark:text-rose-300 dark:ring-rose-300/30',
+    description: 'Plan is closed',
+  },
+}
 
 const serviceDayValues = [
   'MONDAY',
@@ -606,6 +639,15 @@ export function DashboardShell({
     const section = document.getElementById('service-form')
     section?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [])
+
+  const handleSelectSubscription = useCallback(
+    (subscriptionId: string) => {
+      setActiveSubscriptionId((current) => (current === subscriptionId ? current : subscriptionId))
+      setFormStatus('idle')
+      scrollToServiceForm()
+    },
+    [scrollToServiceForm],
+  )
 
   const greeting = user.firstName ? `Hello ${user.firstName}!` : 'Welcome back!'
   useEffect(() => {
@@ -1046,16 +1088,6 @@ export function DashboardShell({
     )
   }
 
-  const subscriptionOptions = isEditMode
-    ? managedSubscriptions.map((subscription) => ({
-        id: subscription.id,
-        label:
-          subscription.planName?.length
-            ? `${subscription.planName} – ${subscription.street}`
-            : `Subscription • ${subscription.street}`,
-      }))
-    : []
-
   const stripeDetails = activeSubscription
     ? {
         stripeStatus: activeSubscription.stripeStatus,
@@ -1066,27 +1098,116 @@ export function DashboardShell({
   return (
     <>
       <DashboardScaffold user={user} title={headerTitle} description={headerDescription} actions={headerActions}>
-        {isEditMode && subscriptionOptions.length > 1 ? (
-          <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
-            <label htmlFor="subscription-select" className="block text-sm font-medium text-gray-900 dark:text-white">
-              Select subscription
-            </label>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-              Choose which subscription you would like to update.
-            </p>
-            <select
-              id="subscription-select"
-              value={activeSubscriptionId ?? ''}
-              onChange={(event) => setActiveSubscriptionId(event.target.value || null)}
-              className="mt-3 w-full rounded-md border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
-            >
-              {subscriptionOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        {isEditMode && managedSubscriptions.length > 0 ? (
+          <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Your subscriptions</h2>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                  Pick a plan to review its details, then make updates below.
+                </p>
+              </div>
+            </div>
+            <ul role="list" className="mt-6 divide-y divide-gray-200 dark:divide-white/10">
+              {managedSubscriptions.map((subscription) => {
+                const isActiveSubscription = subscription.id === activeSubscriptionId
+                const planLabel = subscription.planName?.trim().length
+                  ? subscription.planName
+                  : 'Custom plan'
+                const propertyLabel = subscription.addressLabel?.trim().length
+                  ? subscription.addressLabel
+                  : subscription.street
+                const serviceCount = subscription.services.length
+                const serviceCountLabel =
+                  serviceCount === 0
+                    ? 'No services selected'
+                    : `${serviceCount} ${serviceCount === 1 ? 'service' : 'services'} selected`
+                const serviceDayLabel = formatServiceDayDisplay(
+                  normalizeServiceDayValue(subscription.serviceDay),
+                )
+                const statusPresentation = subscriptionStatusDisplay[subscription.status]
+                const monthlyTotalLabel =
+                  typeof subscription.monthlyTotal === 'number'
+                    ? `$${subscription.monthlyTotal.toFixed(2)}`
+                    : 'Awaiting checkout'
+
+                return (
+                  <li
+                    key={subscription.id}
+                    className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0 flex-auto">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                        <span
+                          className={classNames(
+                            'flex-none rounded-full p-1',
+                            statusPresentation.indicatorClass,
+                          )}
+                        >
+                          <span className="block size-2 rounded-full bg-current" />
+                        </span>
+                        <h3 className="min-w-0 text-sm font-semibold text-gray-900 dark:text-white">
+                          <span className="truncate">{propertyLabel}</span>
+                        </h3>
+                        <span
+                          className={classNames(
+                            'rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset',
+                            statusPresentation.badgeClass,
+                          )}
+                        >
+                          {statusPresentation.label}
+                        </span>
+                        {isActiveSubscription ? (
+                          <span className="rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-600 ring-1 ring-inset ring-indigo-600/20 dark:bg-indigo-500/10 dark:text-indigo-200 dark:ring-indigo-400/30">
+                            Currently editing
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        {subscription.street}, {subscription.city}, {subscription.state} {subscription.postalCode}
+                      </p>
+                      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+                        <span>{planLabel}</span>
+                        <span aria-hidden="true">•</span>
+                        <span>{serviceCountLabel}</span>
+                        {serviceDayLabel ? (
+                          <>
+                            <span aria-hidden="true">•</span>
+                            <span>Prefers {serviceDayLabel}</span>
+                          </>
+                        ) : null}
+                        <span aria-hidden="true">•</span>
+                        <span>{statusPresentation.description}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-stretch gap-3 sm:min-w-[14rem] sm:items-end">
+                      <div className="flex items-center gap-3 sm:justify-end">
+                        <div className="text-left sm:text-right">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Monthly total</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {monthlyTotalLabel}
+                            {typeof subscription.monthlyTotal === 'number' ? <span>/mo</span> : null}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        color="green"
+                        onClick={() => handleSelectSubscription(subscription.id)}
+                        disabled={isActiveSubscription}
+                        className={classNames('gap-2', isActiveSubscription ? 'cursor-default opacity-70' : '')}
+                      >
+                        {isActiveSubscription ? 'Editing' : 'Edit subscription'}
+                        {!isActiveSubscription ? (
+                          <ChevronRightIcon aria-hidden="true" className="size-4" />
+                        ) : null}
+                      </Button>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
         ) : null}
 
         {checkoutNotice ? (
