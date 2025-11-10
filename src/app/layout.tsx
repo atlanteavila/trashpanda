@@ -1,7 +1,4 @@
 import { type Metadata } from 'next'
-import { Inter, Lexend } from 'next/font/google'
-import clsx from 'clsx'
-
 import '@/styles/tailwind.css'
 
 export const metadata: Metadata = {
@@ -13,18 +10,6 @@ export const metadata: Metadata = {
     'We collect the trash that you have no time to deal with!',
 }
 
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
-})
-
-const lexend = Lexend({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-lexend',
-})
-
 export default function RootLayout({
   children,
 }: {
@@ -33,11 +18,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={clsx(
-        'h-full scroll-smooth bg-white antialiased dark:bg-gray-900',
-        inter.variable,
-        lexend.variable,
-      )}
+      className="h-full scroll-smooth bg-white antialiased dark:bg-gray-900"
     >
       <body className="flex h-full flex-col bg-white dark:bg-gray-900">{children}</body>
     </html>

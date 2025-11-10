@@ -11,19 +11,24 @@ export const metadata: Metadata = {
   title: 'Sign Up',
 }
 
-export default function Register({
+type RegisterSearchParams = {
+  error?: string | string[]
+}
+
+export default async function Register({
   searchParams,
 }: {
-  searchParams?: { error?: string | string[] }
+  searchParams?: Promise<RegisterSearchParams>
 }) {
-  const errorParam = searchParams?.error
+  const resolvedSearchParams = (await searchParams) ?? {}
+  const errorParam = resolvedSearchParams.error
   const errorMessage = Array.isArray(errorParam) ? errorParam[0] : errorParam
 
   return (
     <SlimLayout>
       <div className="flex">
         <Link href="/" aria-label="Home">
-          <Logo className="h-10 w-auto" />
+          <Logo variant="dark" className="h-10 w-auto" />
         </Link>
       </div>
       <h2 className="mt-20 text-lg font-semibold text-gray-900">
