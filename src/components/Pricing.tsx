@@ -125,12 +125,12 @@ export function Pricing() {
               <SwirlyDoodle className="absolute top-1/2 left-0 h-[1em] w-full fill-green-400" />
               <span className="relative">Straightforward plans,</span>
             </span>{' '}
-            crafted for Pinehurst homes.
+            crafted for your beautiful home.
           </h2>
           <p className="mt-4 text-lg text-slate-400">
             Choose the curbside care that fits your routine. Every plan includes
             dependable bin take-out/return plus flexible scheduling if you need
-            to pause for vacations.
+            to pause for vacations. Remeber, bundle and save!
           </p>
         </div>
         <div className="-mx-4 mt-16 grid max-w-2xl grid-cols-1 gap-y-10 sm:mx-auto lg:-mx-8 lg:max-w-none lg:grid-cols-3 xl:mx-0 xl:gap-x-8">
@@ -149,7 +149,7 @@ export function Pricing() {
           <Plan
             featured
             name="Home Care Basic"
-            price="$34.99/mo"
+            price="$44.99/mo"
             description="Our most popular mix of weekly trash help and yard freshness."
             href="/register"
             features={[
@@ -162,15 +162,14 @@ export function Pricing() {
           />
           <Plan
             name="Home Care Plus"
-            price="$50/mo"
+            price="$57.59/mo"
             description="Premium curbside concierge service with seasonal extras."
             href="/register"
             features={[
               'Everything in Home Care Basic',
               'Monthly bin washing for two cans',
               'Porch and driveway blowing twice per month',
-              'Seasonal leaf raking visit included each fall',
-              'Add-on scheduling concierge via text',
+              '1 Seasonal leaf raking visit included each fall',
             ]}
           />
         </div>
