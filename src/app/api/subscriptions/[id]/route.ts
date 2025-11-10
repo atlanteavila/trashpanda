@@ -113,7 +113,7 @@ function normalizeAddress(address: AddressPayload | undefined) {
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
   const session = await auth()
 
@@ -121,7 +121,8 @@ export async function PATCH(
     return NextResponse.json({ error: 'You must be signed in to update a subscription.' }, { status: 401 })
   }
 
-  const subscriptionId = params.id?.trim()
+  const params = await context.params
+  const subscriptionId = params?.id?.trim()
 
   if (!subscriptionId) {
     return NextResponse.json({ error: 'Subscription id is required.' }, { status: 400 })

@@ -13,8 +13,8 @@ if (process.env.NODE_ENV !== 'production') {
 export default prisma
 
 type PrismaWithDashboardModels = PrismaClient & {
-  checkoutSession?: Prisma.CheckoutSessionDelegate<false>
-  subscription?: Prisma.SubscriptionDelegate<false>
+  checkoutSession?: Prisma.CheckoutSessionDelegate
+  subscription?: Prisma.SubscriptionDelegate
 }
 
 export function requireCheckoutSessionDelegate() {

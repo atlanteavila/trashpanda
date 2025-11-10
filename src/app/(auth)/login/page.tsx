@@ -9,24 +9,27 @@ export const metadata: Metadata = {
   title: 'Sign In',
 }
 
-export default function Login({
+type LoginSearchParams = {
+  email?: string | string[]
+  error?: string | string[]
+  registered?: string | string[]
+}
+
+export default async function Login({
   searchParams,
 }: {
-  searchParams?: {
-    email?: string | string[]
-    error?: string | string[]
-    registered?: string | string[]
-  }
+  searchParams?: Promise<LoginSearchParams>
 }) {
-  const emailParam = searchParams?.email
+  const resolvedSearchParams = (await searchParams) ?? {}
+  const emailParam = resolvedSearchParams.email
   const defaultEmail = Array.isArray(emailParam) ? emailParam[0] ?? '' : emailParam ?? ''
-  const errorParam = searchParams?.error
+  const errorParam = resolvedSearchParams.error
   const errorValue = Array.isArray(errorParam) ? errorParam[0] : errorParam
   const error =
     errorValue === 'CredentialsSignin'
       ? 'We could not sign you in with those credentials.'
       : errorValue
-  const registeredParam = searchParams?.registered
+  const registeredParam = resolvedSearchParams.registered
   const registered = Array.isArray(registeredParam)
     ? registeredParam[0]
     : registeredParam
@@ -38,7 +41,7 @@ export default function Login({
     <SlimLayout>
       <div className="flex">
         <Link href="/" aria-label="Home">
-          <Logo className="h-10 w-auto" />
+          <Logo variant="dark" className="h-10 w-auto" />
         </Link>
       </div>
       <h2 className="mt-20 text-lg font-semibold text-gray-900">Welcome back</h2>

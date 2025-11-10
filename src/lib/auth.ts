@@ -1,6 +1,7 @@
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { compare } from 'bcryptjs'
 import NextAuth, { type NextAuthConfig } from 'next-auth'
+import type { Adapter } from 'next-auth/adapters'
 import Credentials from 'next-auth/providers/credentials'
 
 import prisma from './prisma'
@@ -12,8 +13,16 @@ const credentials = Credentials({
     password: { label: 'Password', type: 'password' },
   },
   async authorize(rawCredentials) {
-    const email = rawCredentials?.email?.toLowerCase()
-    const password = rawCredentials?.password
+    if (!rawCredentials || typeof rawCredentials !== 'object' || Array.isArray(rawCredentials)) {
+      return null
+    }
+
+    const credentialRecord = rawCredentials as Record<string, unknown>
+    const emailValue = credentialRecord.email
+    const passwordValue = credentialRecord.password
+
+    const email = typeof emailValue === 'string' ? emailValue.trim().toLowerCase() : ''
+    const password = typeof passwordValue === 'string' ? passwordValue : ''
 
     if (!email || !password) {
       return null
@@ -44,7 +53,7 @@ const credentials = Credentials({
 })
 
 export const authOptions: NextAuthConfig = {
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma) as Adapter,
   session: {
     strategy: 'jwt',
   },
