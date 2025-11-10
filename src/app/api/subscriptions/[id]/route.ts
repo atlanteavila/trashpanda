@@ -4,6 +4,33 @@ import { SubscriptionStatus } from '@prisma/client'
 import { auth } from '@/lib/auth'
 import { requireSubscriptionDelegate } from '@/lib/prisma'
 
+const SERVICE_DAY_VALUES = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY',
+] as const
+
+type ServiceDayValue = (typeof SERVICE_DAY_VALUES)[number]
+
+const serviceDaySet = new Set<string>(SERVICE_DAY_VALUES)
+
+function normalizeServiceDay(value: unknown): ServiceDayValue | null {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const normalized = value.trim().toUpperCase()
+  if (!normalized || !serviceDaySet.has(normalized)) {
+    return null
+  }
+
+  return normalized as ServiceDayValue
+}
+
 type ServicePayload = {
   id?: string
   name?: string
@@ -29,6 +56,7 @@ type UpdateSubscriptionPayload = {
   planName?: string | null
   total?: number | null
   status?: SubscriptionStatus | string | null
+  serviceDay?: string | null
 }
 
 function normalizeStatus(value: string | SubscriptionStatus | null | undefined): SubscriptionStatus | null {
@@ -145,6 +173,10 @@ export async function PATCH(
 
   const normalizedStatus = normalizeStatus(payload.status) ?? existing.status
   const safeTotal = Number.isFinite(payload.total) ? Number(payload.total) : existing.monthlyTotal ?? null
+  const hasServiceDay = Object.prototype.hasOwnProperty.call(payload, 'serviceDay')
+  const preferredServiceDay = hasServiceDay
+    ? normalizeServiceDay(payload.serviceDay) ?? null
+    : existing.preferredServiceDay ?? null
 
   const updated = await subscriptions.update({
     where: { id: existing.id },
@@ -157,6 +189,7 @@ export async function PATCH(
       addressCity: address.city,
       addressState: address.state,
       addressPostalCode: address.postalCode,
+      preferredServiceDay,
       services,
       monthlyTotal: safeTotal,
       status: normalizedStatus,
@@ -175,6 +208,7 @@ export async function PATCH(
       addressCity: updated.addressCity,
       addressState: updated.addressState,
       addressPostalCode: updated.addressPostalCode,
+      preferredServiceDay: updated.preferredServiceDay,
       services: updated.services,
       monthlyTotal: updated.monthlyTotal,
       status: updated.status,

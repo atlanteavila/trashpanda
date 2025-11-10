@@ -67,6 +67,7 @@ export default async function ManageSubscriptionsPage() {
     city: subscription.addressCity,
     state: subscription.addressState,
     postalCode: subscription.addressPostalCode,
+    serviceDay: subscription.preferredServiceDay ?? null,
     services: Array.isArray(subscription.services)
       ? (subscription.services as SubscriptionSnapshot['services'])
       : [],

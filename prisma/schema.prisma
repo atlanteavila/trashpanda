@@ -92,6 +92,7 @@ model CheckoutSession {
   addressCity          String
   addressState         String
   addressPostalCode    String
+  preferredServiceDay  String?
   addressSummary       String
   services             Json
   monthlyTotal         Float?
@@ -125,6 +126,7 @@ model Subscription {
   addressCity          String
   addressState         String
   addressPostalCode    String
+  preferredServiceDay  String?
   services             Json
   monthlyTotal         Float?
   status               SubscriptionStatus @default(ACTIVE)

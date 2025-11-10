@@ -5,6 +5,33 @@ import { auth } from '@/lib/auth'
 import { requireCheckoutSessionDelegate } from '@/lib/prisma'
 import { createStripeCheckoutSession, getAppBaseUrl } from '@/lib/stripe'
 
+const SERVICE_DAY_VALUES = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY',
+] as const
+
+type ServiceDayValue = (typeof SERVICE_DAY_VALUES)[number]
+
+const serviceDaySet = new Set<string>(SERVICE_DAY_VALUES)
+
+function normalizeServiceDay(value: unknown): ServiceDayValue | null {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const normalized = value.trim().toUpperCase()
+  if (!normalized || !serviceDaySet.has(normalized)) {
+    return null
+  }
+
+  return normalized as ServiceDayValue
+}
+
 type CheckoutServicePayload = {
   id: string
   name: string
@@ -29,6 +56,7 @@ type CheckoutRequestPayload = {
   planId?: string | null
   planName?: string | null
   total?: number
+  serviceDay?: string | null
 }
 
 type NormalizedService = {
@@ -121,6 +149,7 @@ export async function POST(request: Request) {
   const baseUrl = getAppBaseUrl(request)
 
   const label = addressPayload.label?.trim() ?? null
+  const preferredServiceDay = normalizeServiceDay(payload.serviceDay)
 
   let checkoutSessions: ReturnType<typeof requireCheckoutSessionDelegate>
   try {
@@ -148,6 +177,7 @@ export async function POST(request: Request) {
       addressState: state,
       addressPostalCode: postalCode,
       addressSummary,
+      preferredServiceDay,
       services: services.map((service) => ({
         id: service.id,
         name: service.name,
@@ -182,6 +212,7 @@ export async function POST(request: Request) {
         addressSummary,
         monthlyTotal: safeTotal ? safeTotal.toFixed(2) : '',
         checkoutSessionId: checkoutRecord.id,
+        preferredServiceDay: preferredServiceDay ?? '',
       },
     })
 

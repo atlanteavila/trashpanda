@@ -5,6 +5,33 @@ import { auth } from '@/lib/auth'
 import { requireCheckoutSessionDelegate, requireSubscriptionDelegate } from '@/lib/prisma'
 import { retrieveStripeCheckoutSession } from '@/lib/stripe'
 
+const SERVICE_DAY_VALUES = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY',
+] as const
+
+type ServiceDayValue = (typeof SERVICE_DAY_VALUES)[number]
+
+const serviceDaySet = new Set<string>(SERVICE_DAY_VALUES)
+
+function normalizeServiceDay(value: unknown): ServiceDayValue | null {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const normalized = value.trim().toUpperCase()
+  if (!normalized || !serviceDaySet.has(normalized)) {
+    return null
+  }
+
+  return normalized as ServiceDayValue
+}
+
 type FinalizeOutcome = 'success' | 'cancelled'
 
 type FinalizeRequestPayload = {
@@ -158,6 +185,10 @@ export async function POST(request: Request) {
   try {
     const subscriptions = requireSubscriptionDelegate()
     const services = Array.isArray(checkoutRecord.services) ? checkoutRecord.services : []
+    const normalizedServiceDay =
+      normalizeServiceDay(checkoutRecord.preferredServiceDay) ??
+      normalizeServiceDay(stripeSession?.metadata?.preferredServiceDay) ??
+      null
     const subscriptionPayload = {
       userId: session.user.id,
       planId: checkoutRecord.planId ?? null,
@@ -168,6 +199,7 @@ export async function POST(request: Request) {
       addressCity: checkoutRecord.addressCity,
       addressState: checkoutRecord.addressState,
       addressPostalCode: checkoutRecord.addressPostalCode,
+      preferredServiceDay: normalizedServiceDay,
       services,
       monthlyTotal: checkoutRecord.monthlyTotal ?? null,
       status: SubscriptionStatus.ACTIVE,

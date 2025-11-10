@@ -67,6 +67,7 @@ export interface SubscriptionSnapshot {
   city: string
   state: string
   postalCode: string
+  serviceDay: string | null
   services: SubscriptionServiceSnapshot[]
   monthlyTotal: number | null
   status: SubscriptionStatus
@@ -190,6 +191,33 @@ const subscriptionStatusOptions: Array<{
   },
 ]
 
+const serviceDayValues = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY',
+] as const
+
+type ServiceDayValue = (typeof serviceDayValues)[number]
+
+const serviceDayLabels: Record<ServiceDayValue, string> = {
+  MONDAY: 'Monday',
+  TUESDAY: 'Tuesday',
+  WEDNESDAY: 'Wednesday',
+  THURSDAY: 'Thursday',
+  FRIDAY: 'Friday',
+  SATURDAY: 'Saturday',
+  SUNDAY: 'Sunday',
+}
+
+const serviceDayOptions: Array<{ value: ServiceDayValue | ''; label: string }> = [
+  { value: '', label: 'No preference — coordinate with me' },
+  ...serviceDayValues.map((value) => ({ value, label: serviceDayLabels[value] })),
+]
+
 function classNames(...classes: Array<string | boolean | undefined | null>) {
   return classes.filter(Boolean).join(' ')
 }
@@ -222,6 +250,21 @@ type CheckoutPayloadAddress = {
   city: string
   state: string
   postalCode: string
+}
+
+function normalizeServiceDayValue(value: string | null | undefined): ServiceDayValue | '' {
+  if (!value) {
+    return ''
+  }
+
+  const normalized = value.trim().toUpperCase()
+  return serviceDayValues.includes(normalized as ServiceDayValue)
+    ? (normalized as ServiceDayValue)
+    : ''
+}
+
+function formatServiceDayDisplay(value: ServiceDayValue | '') {
+  return value ? serviceDayLabels[value] : ''
 }
 
 function resolveSubscriptionAddressId(subscription: SubscriptionSnapshot | null) {
@@ -327,6 +370,9 @@ export function DashboardShell({
   const [activePlanId, setActivePlanId] = useState<string | null>(defaultSubscription?.planId ?? null)
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>(
     defaultSubscription?.status ?? 'ACTIVE',
+  )
+  const [serviceDay, setServiceDay] = useState<ServiceDayValue | ''>(
+    normalizeServiceDayValue(defaultSubscription?.serviceDay),
   )
 
   const [selectedServices, setSelectedServices] = useState<Record<ServiceId, ServiceSelection>>(() =>
@@ -659,7 +705,7 @@ export function DashboardShell({
     if (checkoutError) {
       setCheckoutError('')
     }
-  }, [addresses, checkoutError, selectedAddressId, selectedServices])
+  }, [addresses, checkoutError, selectedAddressId, selectedServices, serviceDay])
 
   useEffect(() => {
     if (!isEditMode) {
@@ -670,6 +716,7 @@ export function DashboardShell({
       setActivePlanId(null)
       setSelectedServices(createServiceConfigurationFromSubscription(null))
       setSubscriptionStatus('ACTIVE')
+      setServiceDay('')
       setFormStatus('idle')
       return
     }
@@ -691,6 +738,7 @@ export function DashboardShell({
     setSelectedServices(createServiceConfigurationFromSubscription(activeSubscription))
     setActivePlanId(activeSubscription.planId ?? null)
     setSubscriptionStatus(activeSubscription.status)
+    setServiceDay(normalizeServiceDayValue(activeSubscription.serviceDay))
     setFormStatus('idle')
     setCheckoutNotice(null)
   }, [activeSubscription, initialAddresses, isEditMode])
@@ -743,6 +791,7 @@ export function DashboardShell({
             planName,
             total: monthlyTotal,
             status: subscriptionStatus,
+            serviceDay: serviceDay || null,
           }),
         })
 
@@ -777,6 +826,7 @@ export function DashboardShell({
             city: data.subscription.addressCity,
             state: data.subscription.addressState,
             postalCode: data.subscription.addressPostalCode,
+            serviceDay: data.subscription.preferredServiceDay ?? null,
             services: data.subscription.services ?? [],
             monthlyTotal: data.subscription.monthlyTotal ?? null,
             status: data.subscription.status,
@@ -807,6 +857,7 @@ export function DashboardShell({
             planId: activePlanId,
             planName,
             total: monthlyTotal,
+            serviceDay: serviceDay || null,
           }),
         })
 
@@ -845,6 +896,7 @@ export function DashboardShell({
     isEditMode,
     monthlyTotal,
     planName,
+    serviceDay,
     selectedServiceList,
     subscriptionStatus,
   ])
@@ -1102,6 +1154,35 @@ export function DashboardShell({
                       + Add a new address
                     </button>
                   </div>
+              </div>
+            </div>
+
+              <div className="border-b border-gray-900/10 pb-12 dark:border-white/10">
+                <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">Preferred visit day</h2>
+                <p className="mt-1 text-sm/6 text-gray-600 dark:text-gray-400">
+                  Let us know which day of the week works best for routine service. We will do our best to accommodate it.
+                </p>
+
+                <div className="mt-10 sm:w-72">
+                  <label htmlFor="service-day" className="block text-sm font-medium text-gray-900 dark:text-white">
+                    Weekday preference
+                  </label>
+                  <select
+                    id="service-day"
+                    name="service-day"
+                    value={serviceDay}
+                    onChange={(event) => {
+                      setServiceDay(event.target.value as ServiceDayValue | '')
+                      setFormStatus('idle')
+                    }}
+                    className="mt-2 block w-full rounded-md border-gray-300 bg-white py-2 pl-3 pr-8 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
+                  >
+                    {serviceDayOptions.map((option) => (
+                      <option key={option.value || 'none'} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -1347,6 +1428,12 @@ export function DashboardShell({
                   {activeAddress.street}, {activeAddress.city}, {activeAddress.state} {activeAddress.postalCode}
                 </p>
               ) : null}
+              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                Preferred visit day:{' '}
+                {serviceDay
+                  ? formatServiceDayDisplay(serviceDay)
+                  : 'We will coordinate the best day with you after signup.'}
+              </p>
               <ul className="mt-4 space-y-3">
                 {selectedServiceList.length > 0 ? (
                   selectedServiceList.map((service) => (
