@@ -10,9 +10,9 @@ import { Testimonials } from '@/components/Testimonials'
 
 export default function Home() {
   return (
-    <>
+    <div className="min-h-screen bg-white text-slate-900 dark:bg-white dark:text-slate-900">
       <Header />
-      <main>
+      <main className="bg-white dark:bg-white">
         <Hero />
         <PrimaryFeatures />
         <SecondaryFeatures />
@@ -22,6 +22,6 @@ export default function Home() {
         <Faqs />
       </main>
       <Footer />
-    </>
+    </div>
   )
 }

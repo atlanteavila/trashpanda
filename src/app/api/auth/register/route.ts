@@ -88,6 +88,7 @@ export async function POST(request: Request) {
         referralSource,
         addresses: {
           create: {
+            label: 'Home',
             street,
             city,
             state: normalizedState,
