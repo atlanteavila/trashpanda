@@ -10,7 +10,12 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/Button'
 import { DashboardScaffold } from '@/components/dashboard/DashboardScaffold'
 
-type ServiceId = 'trash' | 'bin-wash' | 'poop-scoop' | 'porch-blow' | 'yard-rake'
+type ServiceId =
+  | 'trash'
+  | 'bin-wash'
+  | 'poop-scoop'
+  | 'porch-blow'
+  | 'yard-rake'
 
 export interface DashboardAddress {
   id: string
@@ -155,7 +160,8 @@ const planPresets = [
   {
     id: 'plus',
     name: 'Home Care Plus',
-    description: 'Trash pickup with bin washing (two cans) and porch blowing twice per month.',
+    description:
+      'Trash pickup with bin washing (two cans) and porch blowing twice per month.',
     configuration: {
       trash: { active: true, quantity: 1 },
       'bin-wash': { active: true, quantity: 2 },
@@ -183,12 +189,14 @@ const subscriptionStatusOptions: Array<{
   {
     value: 'PAUSED',
     label: 'Paused',
-    description: 'Temporarily pause service while keeping your configuration saved.',
+    description:
+      'Temporarily pause service while keeping your configuration saved.',
   },
   {
     value: 'CANCELLED',
     label: 'Cancelled',
-    description: 'Close this plan. We will stop service after the current cycle.',
+    description:
+      'Close this plan. We will stop service after the current cycle.',
   },
 ]
 
@@ -203,21 +211,24 @@ const subscriptionStatusDisplay: Record<
 > = {
   ACTIVE: {
     label: 'Active',
-    indicatorClass: 'bg-green-100 text-green-600 dark:bg-green-400/20 dark:text-green-300',
+    indicatorClass:
+      'bg-green-100 text-green-600 dark:bg-green-400/20 dark:text-green-300',
     badgeClass:
       'bg-green-50 text-green-600 ring-green-600/10 dark:bg-green-400/10 dark:text-green-300 dark:ring-green-300/30',
     description: 'Billing in progress',
   },
   PAUSED: {
     label: 'Paused',
-    indicatorClass: 'bg-amber-100 text-amber-600 dark:bg-amber-400/20 dark:text-amber-300',
+    indicatorClass:
+      'bg-amber-100 text-amber-600 dark:bg-amber-400/20 dark:text-amber-300',
     badgeClass:
       'bg-amber-50 text-amber-600 ring-amber-600/10 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-300/30',
     description: 'Service is on hold',
   },
   CANCELLED: {
     label: 'Cancelled',
-    indicatorClass: 'bg-rose-100 text-rose-600 dark:bg-rose-400/20 dark:text-rose-300',
+    indicatorClass:
+      'bg-rose-100 text-rose-600 dark:bg-rose-400/20 dark:text-rose-300',
     badgeClass:
       'bg-rose-50 text-rose-600 ring-rose-600/10 dark:bg-rose-400/10 dark:text-rose-300 dark:ring-rose-300/30',
     description: 'Plan is closed',
@@ -246,10 +257,14 @@ const serviceDayLabels: Record<ServiceDayValue, string> = {
   SUNDAY: 'Sunday',
 }
 
-const serviceDayOptions: Array<{ value: ServiceDayValue | ''; label: string }> = [
-  { value: '', label: 'No preference — coordinate with me' },
-  ...serviceDayValues.map((value) => ({ value, label: serviceDayLabels[value] })),
-]
+const serviceDayOptions: Array<{ value: ServiceDayValue | ''; label: string }> =
+  [
+    { value: '', label: 'No preference — coordinate with me' },
+    ...serviceDayValues.map((value) => ({
+      value,
+      label: serviceDayLabels[value],
+    })),
+  ]
 
 function classNames(...classes: Array<string | boolean | undefined | null>) {
   return classes.filter(Boolean).join(' ')
@@ -260,9 +275,11 @@ function createAddressId() {
 }
 
 const noticeToneStyles: Record<'success' | 'info' | 'error', string> = {
-  success: 'border-green-200 bg-green-50 text-green-800 dark:border-green-500/40 dark:bg-green-500/10 dark:text-green-200',
+  success:
+    'border-green-200 bg-green-50 text-green-800 dark:border-green-500/40 dark:bg-green-500/10 dark:text-green-200',
   info: 'border-indigo-200 bg-indigo-50 text-indigo-800 dark:border-indigo-400/40 dark:bg-indigo-500/10 dark:text-indigo-200',
-  error: 'border-red-200 bg-red-50 text-red-800 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200',
+  error:
+    'border-red-200 bg-red-50 text-red-800 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200',
 }
 
 type CheckoutNotice = { type: 'success' | 'info' | 'error'; message: string }
@@ -285,7 +302,9 @@ type CheckoutPayloadAddress = {
   postalCode: string
 }
 
-function normalizeServiceDayValue(value: string | null | undefined): ServiceDayValue | '' {
+function normalizeServiceDayValue(
+  value: string | null | undefined,
+): ServiceDayValue | '' {
   if (!value) {
     return ''
   }
@@ -300,23 +319,31 @@ function formatServiceDayDisplay(value: ServiceDayValue | '') {
   return value ? serviceDayLabels[value] : ''
 }
 
-function resolveSubscriptionAddressId(subscription: SubscriptionSnapshot | null) {
+function resolveSubscriptionAddressId(
+  subscription: SubscriptionSnapshot | null,
+) {
   if (!subscription) {
     return null
   }
   return subscription.addressId ?? `subscription-${subscription.id}`
 }
 
-function buildInitialAddresses(initial: DashboardAddress[], subscription: SubscriptionSnapshot | null) {
+function buildInitialAddresses(
+  initial: DashboardAddress[],
+  subscription: SubscriptionSnapshot | null,
+) {
   const normalized = initial.map((address, index) => ({
     ...address,
-    label: address.label?.trim() ?? (index === 0 ? 'Home' : `Location ${index + 1}`),
+    label:
+      address.label?.trim() ?? (index === 0 ? 'Home' : `Location ${index + 1}`),
   }))
 
   if (subscription) {
     const subscriptionAddressId = resolveSubscriptionAddressId(subscription)
     if (subscriptionAddressId) {
-      const exists = normalized.some((address) => address.id === subscriptionAddressId)
+      const exists = normalized.some(
+        (address) => address.id === subscriptionAddressId,
+      )
       if (!exists) {
         normalized.unshift({
           id: subscriptionAddressId,
@@ -333,18 +360,27 @@ function buildInitialAddresses(initial: DashboardAddress[], subscription: Subscr
   return normalized
 }
 
-function createServiceConfigurationFromSubscription(subscription: SubscriptionSnapshot | null) {
-  return serviceCatalog.reduce((acc, service) => {
-    const snapshot = subscription?.services.find((item) => item.id === service.id)
-    acc[service.id] = {
-      active: Boolean(service.required || snapshot),
-      quantity: snapshot?.quantity ?? service.defaultQuantity ?? 1,
-    }
-    return acc
-  }, {} as Record<ServiceId, ServiceSelection>)
+function createServiceConfigurationFromSubscription(
+  subscription: SubscriptionSnapshot | null,
+) {
+  return serviceCatalog.reduce(
+    (acc, service) => {
+      const snapshot = subscription?.services.find(
+        (item) => item.id === service.id,
+      )
+      acc[service.id] = {
+        active: Boolean(service.required || snapshot),
+        quantity: snapshot?.quantity ?? service.defaultQuantity ?? 1,
+      }
+      return acc
+    },
+    {} as Record<ServiceId, ServiceSelection>,
+  )
 }
 
-function normalizeAddressForPayload(address: DashboardAddress | null): CheckoutPayloadAddress | null {
+function normalizeAddressForPayload(
+  address: DashboardAddress | null,
+): CheckoutPayloadAddress | null {
   if (!address) {
     return null
   }
@@ -368,15 +404,20 @@ export function DashboardShell({
 
   const isEditMode = mode === 'edit'
 
-  const [managedSubscriptions, setManagedSubscriptions] = useState<SubscriptionSnapshot[]>(subscriptions)
-  const defaultSubscription = isEditMode ? managedSubscriptions[0] ?? null : null
-  const [activeSubscriptionId, setActiveSubscriptionId] = useState<string | null>(
-    defaultSubscription?.id ?? null,
-  )
+  const [managedSubscriptions, setManagedSubscriptions] =
+    useState<SubscriptionSnapshot[]>(subscriptions)
+  const defaultSubscription = isEditMode
+    ? (managedSubscriptions[0] ?? null)
+    : null
+  const [activeSubscriptionId, setActiveSubscriptionId] = useState<
+    string | null
+  >(defaultSubscription?.id ?? null)
   const activeSubscription = useMemo(
     () =>
       isEditMode
-        ? managedSubscriptions.find((subscription) => subscription.id === activeSubscriptionId) ?? null
+        ? (managedSubscriptions.find(
+            (subscription) => subscription.id === activeSubscriptionId,
+          ) ?? null)
         : null,
     [activeSubscriptionId, isEditMode, managedSubscriptions],
   )
@@ -385,7 +426,9 @@ export function DashboardShell({
     buildInitialAddresses(initialAddresses, defaultSubscription),
   )
   const [selectedAddressId, setSelectedAddressId] = useState(
-    resolveSubscriptionAddressId(defaultSubscription) ?? initialAddresses[0]?.id ?? '',
+    resolveSubscriptionAddressId(defaultSubscription) ??
+      initialAddresses[0]?.id ??
+      '',
   )
   const [addressFormState, setAddressFormState] = useState({
     label: '',
@@ -397,38 +440,46 @@ export function DashboardShell({
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [addressError, setAddressError] = useState('')
   const [formStatus, setFormStatus] = useState<'idle' | 'saved'>('idle')
-  const [checkoutStatus, setCheckoutStatus] = useState<'idle' | 'loading'>('idle')
-  const [checkoutError, setCheckoutError] = useState('')
-  const [checkoutNotice, setCheckoutNotice] = useState<CheckoutNotice | null>(null)
-  const [activePlanId, setActivePlanId] = useState<string | null>(defaultSubscription?.planId ?? null)
-  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>(
-    defaultSubscription?.status ?? 'ACTIVE',
+  const [checkoutStatus, setCheckoutStatus] = useState<'idle' | 'loading'>(
+    'idle',
   )
+  const [checkoutError, setCheckoutError] = useState('')
+  const [checkoutNotice, setCheckoutNotice] = useState<CheckoutNotice | null>(
+    null,
+  )
+  const [activePlanId, setActivePlanId] = useState<string | null>(
+    defaultSubscription?.planId ?? null,
+  )
+  const [subscriptionStatus, setSubscriptionStatus] =
+    useState<SubscriptionStatus>(defaultSubscription?.status ?? 'ACTIVE')
   const [serviceDay, setServiceDay] = useState<ServiceDayValue | ''>(
     normalizeServiceDayValue(defaultSubscription?.serviceDay),
   )
 
-  const [selectedServices, setSelectedServices] = useState<Record<ServiceId, ServiceSelection>>(() =>
-    createServiceConfigurationFromSubscription(defaultSubscription),
+  const [selectedServices, setSelectedServices] = useState<
+    Record<ServiceId, ServiceSelection>
+  >(() => createServiceConfigurationFromSubscription(defaultSubscription))
+
+  const calculateConfigurationTotal = useCallback(
+    (configuration: Record<ServiceId, ServiceSelection>) => {
+      const total = serviceCatalog.reduce((runningTotal, service) => {
+        const selection = configuration[service.id]
+        if (!selection?.active) {
+          return runningTotal
+        }
+        const quantity = service.allowQuantity ? selection.quantity : 1
+        return runningTotal + service.monthlyRate * quantity
+      }, 0)
+
+      return Math.round(total * 100) / 100
+    },
+    [],
   )
 
-  const calculateConfigurationTotal = useCallback((configuration: Record<ServiceId, ServiceSelection>) => {
-    const total = serviceCatalog.reduce((runningTotal, service) => {
-      const selection = configuration[service.id]
-      if (!selection?.active) {
-        return runningTotal
-      }
-      const quantity = service.allowQuantity ? selection.quantity : 1
-      return runningTotal + service.monthlyRate * quantity
-    }, 0)
-
-    return Math.round(total * 100) / 100
-  }, [])
-
-  const baseMonthlyTotal = useMemo(() => calculateConfigurationTotal(selectedServices), [
-    calculateConfigurationTotal,
-    selectedServices,
-  ])
+  const baseMonthlyTotal = useMemo(
+    () => calculateConfigurationTotal(selectedServices),
+    [calculateConfigurationTotal, selectedServices],
+  )
 
   const hasBundleDiscount = Boolean(activePlanId)
 
@@ -470,19 +521,26 @@ export function DashboardShell({
   }, [selectedServices])
 
   const planSummaries = useMemo<PlanSummary[]>(() => {
-    return planPresets.map((plan) => {
-      const configuration = serviceCatalog.reduce((acc, service) => {
-        const presetConfig = plan.configuration[service.id]
-        acc[service.id] = {
-          active: presetConfig?.active || Boolean(service.required),
-          quantity: presetConfig?.quantity ?? service.defaultQuantity ?? 1,
-        }
-        return acc
-      }, {} as Record<ServiceId, ServiceSelection>)
+    return planPresets.map((plan: any) => {
+      const configuration = serviceCatalog.reduce(
+        (acc, service) => {
+          const presetConfig = plan.configuration[service.id]
+          acc[service.id] = {
+            active: presetConfig?.active || Boolean(service.required),
+            quantity: presetConfig?.quantity ?? service.defaultQuantity ?? 1,
+          }
+          return acc
+        },
+        {} as Record<ServiceId, ServiceSelection>,
+      )
 
       const planBaseTotal = calculateConfigurationTotal(configuration)
-      const discountAmount = planBaseTotal > 0 ? Math.round(planBaseTotal * BUNDLE_DISCOUNT_RATE * 100) / 100 : 0
-      const planTotal = Math.round(Math.max(planBaseTotal - discountAmount, 0) * 100) / 100
+      const discountAmount =
+        planBaseTotal > 0
+          ? Math.round(planBaseTotal * BUNDLE_DISCOUNT_RATE * 100) / 100
+          : 0
+      const planTotal =
+        Math.round(Math.max(planBaseTotal - discountAmount, 0) * 100) / 100
 
       return {
         ...plan,
@@ -499,7 +557,7 @@ export function DashboardShell({
   )
 
   const activePlan = activePlanId
-    ? planSummaries.find((plan) => plan.id === activePlanId) ?? null
+    ? (planSummaries.find((plan) => plan.id === activePlanId) ?? null)
     : null
 
   const hasServices = selectedServiceList.length > 0
@@ -520,9 +578,9 @@ export function DashboardShell({
             quantity: service.defaultQuantity ?? 1,
           }
         }
-        for (const [serviceId, config] of Object.entries(plan.configuration) as Array<
-          [ServiceId, ServiceSelection]
-        >) {
+        for (const [serviceId, config] of Object.entries(
+          plan.configuration,
+        ) as Array<[ServiceId, ServiceSelection]>) {
           nextConfiguration[serviceId] = {
             active: config.active,
             quantity: config.quantity,
@@ -536,45 +594,58 @@ export function DashboardShell({
     [activePlanId],
   )
 
-  const handleToggleService = useCallback((serviceId: ServiceId, active: boolean) => {
-    setSelectedServices((prev) => {
-      const serviceDefinition = serviceCatalog.find((service) => service.id === serviceId)
-      if (serviceDefinition?.required) {
-        return prev
-      }
+  const handleToggleService = useCallback(
+    (serviceId: ServiceId, active: boolean) => {
+      setSelectedServices((prev) => {
+        const serviceDefinition = serviceCatalog.find(
+          (service) => service.id === serviceId,
+        )
+        if (serviceDefinition?.required) {
+          return prev
+        }
 
-      const next = {
-        ...prev,
-        [serviceId]: {
-          ...prev[serviceId],
-          active,
-        },
-      }
-      return next
-    })
-    setActivePlanId(null)
-    setFormStatus('idle')
-  }, [])
+        const next = {
+          ...prev,
+          [serviceId]: {
+            ...prev[serviceId],
+            active,
+          },
+        }
+        return next
+      })
+      setActivePlanId(null)
+      setFormStatus('idle')
+    },
+    [],
+  )
 
-  const handleQuantityChange = useCallback((serviceId: ServiceId, quantity: number) => {
-    setSelectedServices((prev) => {
-      const serviceDefinition = serviceCatalog.find((service) => service.id === serviceId)
-      if (!serviceDefinition?.allowQuantity) {
-        return prev
-      }
-      const minQuantity = serviceDefinition.minQuantity ?? 1
-      const safeQuantity = Number.isFinite(quantity) && quantity >= minQuantity ? quantity : minQuantity
-      return {
-        ...prev,
-        [serviceId]: {
-          ...prev[serviceId],
-          quantity: safeQuantity,
-        },
-      }
-    })
-    setActivePlanId(null)
-    setFormStatus('idle')
-  }, [])
+  const handleQuantityChange = useCallback(
+    (serviceId: ServiceId, quantity: number) => {
+      setSelectedServices((prev) => {
+        const serviceDefinition = serviceCatalog.find(
+          (service) => service.id === serviceId,
+        )
+        if (!serviceDefinition?.allowQuantity) {
+          return prev
+        }
+        const minQuantity = serviceDefinition.minQuantity ?? 1
+        const safeQuantity =
+          Number.isFinite(quantity) && quantity >= minQuantity
+            ? quantity
+            : minQuantity
+        return {
+          ...prev,
+          [serviceId]: {
+            ...prev[serviceId],
+            quantity: safeQuantity,
+          },
+        }
+      })
+      setActivePlanId(null)
+      setFormStatus('idle')
+    },
+    [],
+  )
 
   const handleSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -642,7 +713,9 @@ export function DashboardShell({
 
   const handleSelectSubscription = useCallback(
     (subscriptionId: string) => {
-      setActiveSubscriptionId((current) => (current === subscriptionId ? current : subscriptionId))
+      setActiveSubscriptionId((current) =>
+        current === subscriptionId ? current : subscriptionId,
+      )
       setFormStatus('idle')
       scrollToServiceForm()
     },
@@ -696,7 +769,10 @@ export function DashboardShell({
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ sessionId: sessionIdParam, outcome: normalizedOutcome }),
+            body: JSON.stringify({
+              sessionId: sessionIdParam,
+              outcome: normalizedOutcome,
+            }),
           })
 
           const data = await response.json().catch(() => null)
@@ -747,7 +823,13 @@ export function DashboardShell({
     if (checkoutError) {
       setCheckoutError('')
     }
-  }, [addresses, checkoutError, selectedAddressId, selectedServices, serviceDay])
+  }, [
+    addresses,
+    checkoutError,
+    selectedAddressId,
+    selectedServices,
+    serviceDay,
+  ])
 
   useEffect(() => {
     if (!isEditMode) {
@@ -766,10 +848,13 @@ export function DashboardShell({
     const addressId = resolveSubscriptionAddressId(activeSubscription)
     setAddresses((prev) => {
       const base = buildInitialAddresses(initialAddresses, activeSubscription)
-      const custom = prev.filter((address) => !initialAddresses.some((existing) => existing.id === address.id))
+      const custom = prev.filter(
+        (address) =>
+          !initialAddresses.some((existing) => existing.id === address.id),
+      )
       for (const extra of custom) {
         if (!base.some((address) => address.id === extra.id)) {
-          base.push(extra)
+          base.push(extra as any)
         }
       }
       return base
@@ -777,7 +862,9 @@ export function DashboardShell({
     if (addressId) {
       setSelectedAddressId(addressId)
     }
-    setSelectedServices(createServiceConfigurationFromSubscription(activeSubscription))
+    setSelectedServices(
+      createServiceConfigurationFromSubscription(activeSubscription),
+    )
     setActivePlanId(activeSubscription.planId ?? null)
     setSubscriptionStatus(activeSubscription.status)
     setServiceDay(normalizeServiceDayValue(activeSubscription.serviceDay))
@@ -799,14 +886,16 @@ export function DashboardShell({
       return
     }
 
-    const services: CheckoutPayloadService[] = selectedServiceList.map((service) => ({
-      id: service.id,
-      name: service.name,
-      quantity: service.quantity,
-      monthlyRate: service.monthlyRate,
-      frequency: service.frequency,
-      notes: service.notes,
-    }))
+    const services: CheckoutPayloadService[] = selectedServiceList.map(
+      (service) => ({
+        id: service.id,
+        name: service.name,
+        quantity: service.quantity,
+        monthlyRate: service.monthlyRate,
+        frequency: service.frequency,
+        notes: service.notes,
+      }),
+    )
 
     const addressPayload = normalizeAddressForPayload(activeAddress)
 
@@ -821,21 +910,24 @@ export function DashboardShell({
       setCheckoutNotice(null)
 
       if (isEditMode && activeSubscription) {
-        const response = await fetch(`/api/subscriptions/${activeSubscription.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
+        const response = await fetch(
+          `/api/subscriptions/${activeSubscription.id}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              services,
+              address: addressPayload,
+              planId: activePlanId,
+              planName,
+              total: monthlyTotal,
+              status: subscriptionStatus,
+              serviceDay: serviceDay || null,
+            }),
           },
-          body: JSON.stringify({
-            services,
-            address: addressPayload,
-            planId: activePlanId,
-            planName,
-            total: monthlyTotal,
-            status: subscriptionStatus,
-            serviceDay: serviceDay || null,
-          }),
-        })
+        )
 
         const data = await response.json().catch(() => null)
 
@@ -874,11 +966,14 @@ export function DashboardShell({
             status: data.subscription.status,
             stripeStatus: data.subscription.stripeStatus ?? null,
             stripePaymentStatus: data.subscription.stripePaymentStatus ?? null,
-            stripeSubscriptionId: data.subscription.stripeSubscriptionId ?? null,
+            stripeSubscriptionId:
+              data.subscription.stripeSubscriptionId ?? null,
           }
 
           setManagedSubscriptions((prev) => {
-            const existingIndex = prev.findIndex((item) => item.id === updated.id)
+            const existingIndex = prev.findIndex(
+              (item) => item.id === updated.id,
+            )
             if (existingIndex === -1) {
               return [...prev, updated]
             }
@@ -906,7 +1001,8 @@ export function DashboardShell({
         if (!response.ok) {
           const errorPayload = await response.json().catch(() => null)
           const message =
-            typeof errorPayload?.error === 'string' && errorPayload.error.length > 0
+            typeof errorPayload?.error === 'string' &&
+            errorPayload.error.length > 0
               ? errorPayload.error
               : 'Unable to start checkout. Please try again.'
           setCheckoutError(message)
@@ -920,12 +1016,16 @@ export function DashboardShell({
           return
         }
 
-        setCheckoutError('Checkout could not start because the session was missing a redirect URL.')
+        setCheckoutError(
+          'Checkout could not start because the session was missing a redirect URL.',
+        )
       }
     } catch (error) {
       console.error('Failed to process subscription action', error)
       setCheckoutError(
-        error instanceof Error ? error.message : 'Unable to process your request. Please try again.',
+        error instanceof Error
+          ? error.message
+          : 'Unable to process your request. Please try again.',
       )
     } finally {
       setCheckoutStatus('idle')
@@ -958,7 +1058,7 @@ export function DashboardShell({
           Add new service
         </Button>
       )}
-      <Button type="button" variant="outline" onClick={openAddressModal}>
+      <Button type="button" className='text-white hover:text-white/80' variant="outline" onClick={openAddressModal}>
         Manage addresses
       </Button>
     </>
@@ -967,11 +1067,19 @@ export function DashboardShell({
   if (isEditMode && managedSubscriptions.length === 0) {
     return (
       <>
-        <DashboardScaffold user={user} title={headerTitle} description={headerDescription} actions={headerActions}>
+        <DashboardScaffold
+          user={user}
+          title={headerTitle}
+          description={headerDescription}
+          actions={headerActions}
+        >
           <div className="mt-8 rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center shadow-sm dark:border-white/10 dark:bg-slate-900">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">No subscriptions yet</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              No subscriptions yet
+            </h2>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              It looks like you have not completed a subscription checkout. Create a plan to start managing services.
+              It looks like you have not completed a subscription checkout.
+              Create a plan to start managing services.
             </p>
             <Button href="/dash/add" color="green" className="mt-6">
               Build your first subscription
@@ -979,17 +1087,26 @@ export function DashboardShell({
           </div>
         </DashboardScaffold>
 
-        <Dialog open={isAddressModalOpen} onClose={setIsAddressModalOpen} className="relative z-50">
+        <Dialog
+          open={isAddressModalOpen}
+          onClose={setIsAddressModalOpen}
+          className="relative z-50"
+        >
           <DialogBackdrop className="fixed inset-0 bg-black/40" />
           <div className="fixed inset-0 flex items-center justify-center p-4">
             <DialogPanel className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-xl dark:bg-gray-900">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Add a new service address</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Add a new service address
+              </h2>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                 We will use this address when scheduling recurring services.
               </p>
               <form className="mt-6 space-y-6" onSubmit={handleAddressSubmit}>
                 <div>
-                  <label htmlFor="label" className="block text-sm font-medium text-gray-900 dark:text-white">
+                  <label
+                    htmlFor="label"
+                    className="block text-sm font-medium text-gray-900 dark:text-white"
+                  >
                     Address nickname
                   </label>
                   <input
@@ -998,13 +1115,19 @@ export function DashboardShell({
                     type="text"
                     value={addressFormState.label}
                     onChange={(event) =>
-                      setAddressFormState((prev) => ({ ...prev, label: event.target.value }))
+                      setAddressFormState((prev) => ({
+                        ...prev,
+                        label: event.target.value,
+                      }))
                     }
                     className="mt-2 block w-full rounded-md border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
                   />
                 </div>
                 <div>
-                  <label htmlFor="street" className="block text-sm font-medium text-gray-900 dark:text-white">
+                  <label
+                    htmlFor="street"
+                    className="block text-sm font-medium text-gray-900 dark:text-white"
+                  >
                     Street address
                   </label>
                   <input
@@ -1013,14 +1136,20 @@ export function DashboardShell({
                     type="text"
                     value={addressFormState.street}
                     onChange={(event) =>
-                      setAddressFormState((prev) => ({ ...prev, street: event.target.value }))
+                      setAddressFormState((prev) => ({
+                        ...prev,
+                        street: event.target.value,
+                      }))
                     }
                     className="mt-2 block w-full rounded-md border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
                   />
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-900 dark:text-white">
+                    <label
+                      htmlFor="city"
+                      className="block text-sm font-medium text-gray-900 dark:text-white"
+                    >
                       City
                     </label>
                     <input
@@ -1029,13 +1158,19 @@ export function DashboardShell({
                       type="text"
                       value={addressFormState.city}
                       onChange={(event) =>
-                        setAddressFormState((prev) => ({ ...prev, city: event.target.value }))
+                        setAddressFormState((prev) => ({
+                          ...prev,
+                          city: event.target.value,
+                        }))
                       }
                       className="mt-2 block w-full rounded-md border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
                     />
                   </div>
                   <div>
-                    <label htmlFor="state" className="block text-sm font-medium text-gray-900 dark:text-white">
+                    <label
+                      htmlFor="state"
+                      className="block text-sm font-medium text-gray-900 dark:text-white"
+                    >
                       State
                     </label>
                     <input
@@ -1044,14 +1179,20 @@ export function DashboardShell({
                       type="text"
                       value={addressFormState.state}
                       onChange={(event) =>
-                        setAddressFormState((prev) => ({ ...prev, state: event.target.value }))
+                        setAddressFormState((prev) => ({
+                          ...prev,
+                          state: event.target.value,
+                        }))
                       }
                       className="mt-2 block w-full rounded-md border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
                     />
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="postalCode" className="block text-sm font-medium text-gray-900 dark:text-white">
+                  <label
+                    htmlFor="postalCode"
+                    className="block text-sm font-medium text-gray-900 dark:text-white"
+                  >
                     ZIP / Postal code
                   </label>
                   <input
@@ -1060,13 +1201,18 @@ export function DashboardShell({
                     type="text"
                     value={addressFormState.postalCode}
                     onChange={(event) =>
-                      setAddressFormState((prev) => ({ ...prev, postalCode: event.target.value }))
+                      setAddressFormState((prev) => ({
+                        ...prev,
+                        postalCode: event.target.value,
+                      }))
                     }
                     className="mt-2 block w-full rounded-md border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
                   />
                 </div>
                 {addressError ? (
-                  <p className="text-sm text-red-600 dark:text-red-400">{addressError}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {addressError}
+                  </p>
                 ) : null}
                 <div className="flex items-center justify-end gap-x-4">
                   <button
@@ -1097,20 +1243,31 @@ export function DashboardShell({
     : null
   return (
     <>
-      <DashboardScaffold user={user} title={headerTitle} description={headerDescription} actions={headerActions}>
+      <DashboardScaffold
+        user={user}
+        title={headerTitle}
+        description={headerDescription}
+        actions={headerActions}
+      >
         {isEditMode && managedSubscriptions.length > 0 ? (
           <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Your subscriptions</h2>
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                  Your subscriptions
+                </h2>
                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                   Pick a plan to review its details, then make updates below.
                 </p>
               </div>
             </div>
-            <ul role="list" className="mt-6 divide-y divide-gray-200 dark:divide-white/10">
+            <ul
+              role="list"
+              className="mt-6 divide-y divide-gray-200 dark:divide-white/10"
+            >
               {managedSubscriptions.map((subscription) => {
-                const isActiveSubscription = subscription.id === activeSubscriptionId
+                const isActiveSubscription =
+                  subscription.id === activeSubscriptionId
                 const planLabel = subscription.planName?.trim().length
                   ? subscription.planName
                   : 'Custom plan'
@@ -1125,7 +1282,8 @@ export function DashboardShell({
                 const serviceDayLabel = formatServiceDayDisplay(
                   normalizeServiceDayValue(subscription.serviceDay),
                 )
-                const statusPresentation = subscriptionStatusDisplay[subscription.status]
+                const statusPresentation =
+                  subscriptionStatusDisplay[subscription.status]
                 const monthlyTotalLabel =
                   typeof subscription.monthlyTotal === 'number'
                     ? `$${subscription.monthlyTotal.toFixed(2)}`
@@ -1158,13 +1316,14 @@ export function DashboardShell({
                           {statusPresentation.label}
                         </span>
                         {isActiveSubscription ? (
-                          <span className="rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-600 ring-1 ring-inset ring-indigo-600/20 dark:bg-indigo-500/10 dark:text-indigo-200 dark:ring-indigo-400/30">
+                          <span className="rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-600 ring-1 ring-indigo-600/20 ring-inset dark:bg-indigo-500/10 dark:text-indigo-200 dark:ring-indigo-400/30">
                             Currently editing
                           </span>
                         ) : null}
                       </div>
                       <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                        {subscription.street}, {subscription.city}, {subscription.state} {subscription.postalCode}
+                        {subscription.street}, {subscription.city},{' '}
+                        {subscription.state} {subscription.postalCode}
                       </p>
                       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
                         <span>{planLabel}</span>
@@ -1183,23 +1342,37 @@ export function DashboardShell({
                     <div className="flex flex-col items-stretch gap-3 sm:min-w-[14rem] sm:items-end">
                       <div className="flex items-center gap-3 sm:justify-end">
                         <div className="text-left sm:text-right">
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Monthly total</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Monthly total
+                          </p>
                           <p className="text-sm font-semibold text-gray-900 dark:text-white">
                             {monthlyTotalLabel}
-                            {typeof subscription.monthlyTotal === 'number' ? <span>/mo</span> : null}
+                            {typeof subscription.monthlyTotal === 'number' ? (
+                              <span>/mo</span>
+                            ) : null}
                           </p>
                         </div>
                       </div>
                       <Button
                         type="button"
                         color="green"
-                        onClick={() => handleSelectSubscription(subscription.id)}
+                        onClick={() =>
+                          handleSelectSubscription(subscription.id)
+                        }
                         disabled={isActiveSubscription}
-                        className={classNames('gap-2', isActiveSubscription ? 'cursor-default opacity-70' : '')}
+                        className={classNames(
+                          'gap-2',
+                          isActiveSubscription
+                            ? 'cursor-default opacity-70'
+                            : '',
+                        )}
                       >
                         {isActiveSubscription ? 'Editing' : 'Edit subscription'}
                         {!isActiveSubscription ? (
-                          <ChevronRightIcon aria-hidden="true" className="size-4" />
+                          <ChevronRightIcon
+                            aria-hidden="true"
+                            className="size-4"
+                          />
                         ) : null}
                       </Button>
                     </div>
@@ -1230,14 +1403,19 @@ export function DashboardShell({
               className="space-y-12 rounded-2xl border border-gray-200 bg-white p-8 shadow-sm dark:border-white/10 dark:bg-slate-900"
             >
               <div className="border-b border-gray-900/10 pb-12 dark:border-white/10">
-                <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">Service address</h2>
+                <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">
+                  Service address
+                </h2>
                 <p className="mt-1 text-sm/6 text-gray-600 dark:text-gray-400">
                   Choose where we should service or add a new location.
                 </p>
 
                 <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                   <div className="sm:col-span-4">
-                    <label htmlFor="address" className="block text-sm/6 font-medium text-gray-900 dark:text-white">
+                    <label
+                      htmlFor="address"
+                      className="block text-sm/6 font-medium text-gray-900 dark:text-white"
+                    >
                       Select address
                     </label>
                     <div className="mt-2 grid grid-cols-1">
@@ -1245,7 +1423,9 @@ export function DashboardShell({
                         id="address"
                         name="address"
                         value={selectedAddressId}
-                        onChange={(event) => setSelectedAddressId(event.target.value)}
+                        onChange={(event) =>
+                          setSelectedAddressId(event.target.value)
+                        }
                         disabled={addresses.length === 0}
                         className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:*:bg-gray-800 dark:focus:outline-indigo-500 dark:disabled:bg-white/10 dark:disabled:text-gray-500"
                       >
@@ -1254,7 +1434,8 @@ export function DashboardShell({
                         ) : (
                           addresses.map((address) => (
                             <option key={address.id} value={address.id}>
-                              {address.label} – {address.street}, {address.city}, {address.state}
+                              {address.label} – {address.street}, {address.city}
+                              , {address.state}
                             </option>
                           ))
                         )}
@@ -1275,17 +1456,23 @@ export function DashboardShell({
                       + Add a new address
                     </button>
                   </div>
+                </div>
               </div>
-            </div>
 
               <div className="border-b border-gray-900/10 pb-12 dark:border-white/10">
-                <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">Preferred visit day</h2>
+                <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">
+                  Preferred visit day
+                </h2>
                 <p className="mt-1 text-sm/6 text-gray-600 dark:text-gray-400">
-                  Let us know which day of the week works best for routine service. We will do our best to accommodate it.
+                  Let us know which day of the week works best for routine
+                  service. We will do our best to accommodate it.
                 </p>
 
                 <div className="mt-10 sm:w-72">
-                  <label htmlFor="service-day" className="block text-sm font-medium text-gray-900 dark:text-white">
+                  <label
+                    htmlFor="service-day"
+                    className="block text-sm font-medium text-gray-900 dark:text-white"
+                  >
                     Weekday preference
                   </label>
                   <select
@@ -1296,7 +1483,7 @@ export function DashboardShell({
                       setServiceDay(event.target.value as ServiceDayValue | '')
                       setFormStatus('idle')
                     }}
-                    className="mt-2 block w-full rounded-md border-gray-300 bg-white py-2 pl-3 pr-8 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
+                    className="mt-2 block w-full rounded-md border-gray-300 bg-white py-2 pr-8 pl-3 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
                   >
                     {serviceDayOptions.map((option) => (
                       <option key={option.value || 'none'} value={option.value}>
@@ -1308,9 +1495,12 @@ export function DashboardShell({
               </div>
 
               <div className="border-b border-gray-900/10 pb-12 dark:border-white/10">
-                <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">Bundle presets</h2>
+                <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">
+                  Bundle presets
+                </h2>
                 <p className="mt-1 text-sm/6 text-gray-600 dark:text-gray-400">
-                  Start with a curated bundle, then fine-tune the details to match your home.
+                  Start with a curated bundle, then fine-tune the details to
+                  match your home.
                 </p>
 
                 <div className="mt-10 grid gap-6 lg:grid-cols-2">
@@ -1328,8 +1518,12 @@ export function DashboardShell({
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <h3 className="text-base font-semibold text-gray-900 dark:text-white">{plan.name}</h3>
-                            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{plan.description}</p>
+                            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                              {plan.name}
+                            </h3>
+                            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                              {plan.description}
+                            </p>
                           </div>
                           <div className="text-right">
                             <span className="inline-flex items-center justify-end rounded-full bg-green-500/10 px-3 py-1 text-sm font-semibold text-green-600 dark:bg-green-500/20 dark:text-green-300">
@@ -1337,7 +1531,8 @@ export function DashboardShell({
                             </span>
                             {plan.discountAmount > 0 ? (
                               <p className="mt-1 text-xs font-medium text-green-600 dark:text-green-300">
-                                Save ${plan.discountAmount.toFixed(2)} each month
+                                Save ${plan.discountAmount.toFixed(2)} each
+                                month
                               </p>
                             ) : null}
                           </div>
@@ -1346,7 +1541,11 @@ export function DashboardShell({
                           type="button"
                           color="green"
                           aria-pressed={isActive}
-                          className={classNames('mt-6 w-full', isActive && 'bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800 active:bg-green-200 active:text-green-900')}
+                          className={classNames(
+                            'mt-6 w-full',
+                            isActive &&
+                              'bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800 active:bg-green-200 active:text-green-900',
+                          )}
                           onClick={() => handleSelectPlan(plan)}
                         >
                           {isActive ? 'Remove preset' : 'Use this preset'}
@@ -1359,16 +1558,20 @@ export function DashboardShell({
 
               <div className="space-y-12">
                 <div className="border-b border-gray-900/10 pb-12 dark:border-white/10">
-                  <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">Customize services</h2>
+                  <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">
+                    Customize services
+                  </h2>
                   <p className="mt-1 text-sm/6 text-gray-600 dark:text-gray-400">
-                    Adjust quantities and toggle add-ons to build a plan that works for your household.
+                    Adjust quantities and toggle add-ons to build a plan that
+                    works for your household.
                   </p>
 
                   <div className="mt-10 space-y-6">
                     {serviceCatalog.map((service) => {
                       const selection = selectedServices[service.id]
                       const isActive = Boolean(selection?.active)
-                      const quantity = selection?.quantity ?? service.defaultQuantity ?? 1
+                      const quantity =
+                        selection?.quantity ?? service.defaultQuantity ?? 1
                       const minQuantity = service.minQuantity ?? 1
 
                       return (
@@ -1383,7 +1586,12 @@ export function DashboardShell({
                                   id={`service-${service.id}`}
                                   type="checkbox"
                                   checked={isActive}
-                                  onChange={(event) => handleToggleService(service.id, event.target.checked)}
+                                  onChange={(event) =>
+                                    handleToggleService(
+                                      service.id,
+                                      event.target.checked,
+                                    )
+                                  }
                                   disabled={Boolean(service.required)}
                                   className="size-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:cursor-not-allowed dark:border-white/10 dark:bg-white/10 dark:checked:bg-indigo-500"
                                 />
@@ -1394,19 +1602,28 @@ export function DashboardShell({
                                   {service.name}
                                 </label>
                               </div>
-                              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{service.frequency}</p>
+                              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                {service.frequency}
+                              </p>
                               {service.notes ? (
-                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{service.notes}</p>
+                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                  {service.notes}
+                                </p>
                               ) : null}
                             </div>
                             <div className="flex flex-col items-end gap-3">
                               <span className="text-sm font-semibold text-gray-900 dark:text-white">
                                 ${service.monthlyRate.toFixed(2)}
-                                {service.allowQuantity && service.unitLabel ? ` / ${service.unitLabel}` : '/mo'}
+                                {service.allowQuantity && service.unitLabel
+                                  ? ` / ${service.unitLabel}`
+                                  : '/mo'}
                               </span>
                               {service.allowQuantity ? (
                                 <div className="flex items-center gap-2">
-                                  <label htmlFor={`quantity-${service.id}`} className="text-sm text-gray-600 dark:text-gray-400">
+                                  <label
+                                    htmlFor={`quantity-${service.id}`}
+                                    className="text-sm text-gray-600 dark:text-gray-400"
+                                  >
                                     {service.unitLabel ?? 'Quantity'}
                                   </label>
                                   <input
@@ -1416,17 +1633,26 @@ export function DashboardShell({
                                     min={minQuantity}
                                     value={quantity}
                                     disabled={!isActive}
-                                    onChange={(event) => handleQuantityChange(service.id, Number(event.target.value))}
+                                    onChange={(event) =>
+                                      handleQuantityChange(
+                                        service.id,
+                                        Number(event.target.value),
+                                      )
+                                    }
                                     className="w-20 rounded-md border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 disabled:cursor-not-allowed disabled:bg-gray-100 sm:text-sm/6 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
                                   />
                                 </div>
                               ) : null}
                               {isActive ? (
                                 <span className="text-sm text-gray-600 dark:text-gray-400">
-                                  Estimated: ${(service.monthlyRate * quantity).toFixed(2)}/mo
+                                  Estimated: $
+                                  {(service.monthlyRate * quantity).toFixed(2)}
+                                  /mo
                                 </span>
                               ) : (
-                                <span className="text-sm text-gray-400 dark:text-gray-500">Not selected</span>
+                                <span className="text-sm text-gray-400 dark:text-gray-500">
+                                  Not selected
+                                </span>
                               )}
                             </div>
                           </div>
@@ -1438,7 +1664,9 @@ export function DashboardShell({
 
                 {isEditMode ? (
                   <div className="border-b border-gray-900/10 pb-12 dark:border-white/10">
-                    <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">Subscription status</h2>
+                    <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">
+                      Subscription status
+                    </h2>
                     <p className="mt-1 text-sm/6 text-gray-600 dark:text-gray-400">
                       Control whether this plan is actively serviced.
                     </p>
@@ -1461,8 +1689,12 @@ export function DashboardShell({
                             onChange={() => setSubscriptionStatus(option.value)}
                             className="sr-only"
                           />
-                          <span className="text-sm font-semibold text-gray-900 dark:text-white">{option.label}</span>
-                          <span className="text-sm text-gray-600 dark:text-gray-400">{option.description}</span>
+                          <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {option.label}
+                          </span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {option.description}
+                          </span>
                         </label>
                       ))}
                     </div>
@@ -1472,31 +1704,41 @@ export function DashboardShell({
                 <div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">Monthly total</h2>
+                      <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">
+                        Monthly total
+                      </h2>
                       <p className="mt-1 text-sm/6 text-gray-600 dark:text-gray-400">
-                        This reflects the services selected above. Seasonal services are averaged out monthly.
+                        This reflects the services selected above. Seasonal
+                        services are averaged out monthly.
                       </p>
                     </div>
-                  <div className="text-right">
-                    <span className="text-3xl font-semibold text-gray-900 dark:text-white">
-                      ${monthlyTotal.toFixed(2)}
-                    </span>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Estimated monthly investment</p>
-                    {bundleDiscountAmount > 0 ? (
-                      <p className="text-sm font-medium text-green-600 dark:text-green-300">
-                        Includes 10% bundle savings (−${bundleDiscountAmount.toFixed(2)})
+                    <div className="text-right">
+                      <span className="text-3xl font-semibold text-gray-900 dark:text-white">
+                        ${monthlyTotal.toFixed(2)}
+                      </span>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Estimated monthly investment
                       </p>
-                    ) : null}
+                      {bundleDiscountAmount > 0 ? (
+                        <p className="text-sm font-medium text-green-600 dark:text-green-300">
+                          Includes 10% bundle savings (−$
+                          {bundleDiscountAmount.toFixed(2)})
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
 
                   <div className="mt-6 space-y-4 sm:flex sm:items-center sm:justify-between sm:space-y-0">
                     <div className="space-y-2 text-sm">
                       {formStatus === 'saved' ? (
-                        <p className="text-green-600 dark:text-green-400">Preferences saved.</p>
+                        <p className="text-green-600 dark:text-green-400">
+                          Preferences saved.
+                        </p>
                       ) : null}
                       {checkoutError ? (
-                        <p className="text-red-600 dark:text-red-400">{checkoutError}</p>
+                        <p className="text-red-600 dark:text-red-400">
+                          {checkoutError}
+                        </p>
                       ) : null}
                     </div>
                     <div className="flex flex-col gap-3 sm:flex-row">
@@ -1506,7 +1748,11 @@ export function DashboardShell({
                       <Button
                         type="button"
                         color="green"
-                        disabled={!hasServices || !activeAddress || checkoutStatus === 'loading'}
+                        disabled={
+                          !hasServices ||
+                          !activeAddress ||
+                          checkoutStatus === 'loading'
+                        }
                         onClick={handlePrimaryAction}
                       >
                         {checkoutStatus === 'loading'
@@ -1525,9 +1771,11 @@ export function DashboardShell({
           </section>
           <aside className="space-y-6">
             <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Your cart</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                Your cart
+              </h2>
               {activePlan ? (
-                <p className="mt-1 text-xs uppercase tracking-wide text-indigo-600 dark:text-indigo-300">
+                <p className="mt-1 text-xs tracking-wide text-indigo-600 uppercase dark:text-indigo-300">
                   Bundle preset: {activePlan.name}
                 </p>
               ) : null}
@@ -1537,16 +1785,18 @@ export function DashboardShell({
                 </p>
               ) : null}
               {planName && !activePlan ? (
-                <p className="mt-1 text-xs uppercase tracking-wide text-indigo-600 dark:text-indigo-300">
+                <p className="mt-1 text-xs tracking-wide text-indigo-600 uppercase dark:text-indigo-300">
                   Plan: {planName}
                 </p>
               ) : null}
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Here is what we will schedule for {activeAddress?.label ?? 'your home'}.
+                Here is what we will schedule for{' '}
+                {activeAddress?.label ?? 'your home'}.
               </p>
               {activeAddress ? (
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {activeAddress.street}, {activeAddress.city}, {activeAddress.state} {activeAddress.postalCode}
+                  {activeAddress.street}, {activeAddress.city},{' '}
+                  {activeAddress.state} {activeAddress.postalCode}
                 </p>
               ) : null}
               <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
@@ -1558,13 +1808,21 @@ export function DashboardShell({
               <ul className="mt-4 space-y-3">
                 {selectedServiceList.length > 0 ? (
                   selectedServiceList.map((service) => (
-                    <li key={service.id} className="flex justify-between text-sm">
+                    <li
+                      key={service.id}
+                      className="flex justify-between text-sm"
+                    >
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white">{service.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{service.frequency}</p>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {service.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {service.frequency}
+                        </p>
                         {service.quantity > 1 ? (
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {service.quantity} × ${service.monthlyRate.toFixed(2)}
+                            {service.quantity} × $
+                            {service.monthlyRate.toFixed(2)}
                           </p>
                         ) : null}
                       </div>
@@ -1574,7 +1832,9 @@ export function DashboardShell({
                     </li>
                   ))
                 ) : (
-                  <li className="text-sm text-gray-500 dark:text-gray-400">No services selected yet.</li>
+                  <li className="text-sm text-gray-500 dark:text-gray-400">
+                    No services selected yet.
+                  </li>
                 )}
               </ul>
               <div className="mt-6 space-y-2 text-sm">
@@ -1596,9 +1856,12 @@ export function DashboardShell({
             </div>
 
             <div className="rounded-xl border border-indigo-200 bg-indigo-50/90 p-6 shadow-sm dark:border-indigo-500/40 dark:bg-indigo-900/40">
-              <h3 className="text-base font-semibold text-indigo-900 dark:text-indigo-100">Need a seasonal boost?</h3>
+              <h3 className="text-base font-semibold text-indigo-900 dark:text-indigo-100">
+                Need a seasonal boost?
+              </h3>
               <p className="mt-2 text-sm text-indigo-900/80 dark:text-indigo-100/80">
-                Add a fall yard raking visit to stay ahead of leaf build-up. It averages just $8.33/month when spread across the season.
+                Add a fall yard raking visit to stay ahead of leaf build-up. It
+                averages just $8.33/month when spread across the season.
               </p>
               <Button
                 type="button"
@@ -1612,23 +1875,35 @@ export function DashboardShell({
 
             {isEditMode && stripeDetails ? (
               <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white">Billing status</h3>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                  Billing status
+                </h3>
                 <dl className="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">
                   <div className="flex justify-between">
-                    <dt className="font-medium text-gray-700 dark:text-gray-300">Subscription state</dt>
-                    <dd className="capitalize text-gray-900 dark:text-white">{subscriptionStatus.toLowerCase()}</dd>
+                    <dt className="font-medium text-gray-700 dark:text-gray-300">
+                      Subscription state
+                    </dt>
+                    <dd className="text-gray-900 capitalize dark:text-white">
+                      {subscriptionStatus.toLowerCase()}
+                    </dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="font-medium text-gray-700 dark:text-gray-300">Stripe status</dt>
+                    <dt className="font-medium text-gray-700 dark:text-gray-300">
+                      Stripe status
+                    </dt>
                     <dd>{stripeDetails.stripeStatus ?? '—'}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="font-medium text-gray-700 dark:text-gray-300">Payment status</dt>
+                    <dt className="font-medium text-gray-700 dark:text-gray-300">
+                      Payment status
+                    </dt>
                     <dd>{stripeDetails.stripePaymentStatus ?? '—'}</dd>
                   </div>
                   {stripeDetails.stripeSubscriptionId ? (
                     <div className="flex flex-col">
-                      <dt className="font-medium text-gray-700 dark:text-gray-300">Stripe subscription ID</dt>
+                      <dt className="font-medium text-gray-700 dark:text-gray-300">
+                        Stripe subscription ID
+                      </dt>
                       <dd className="font-mono text-xs text-gray-500 dark:text-gray-400">
                         {stripeDetails.stripeSubscriptionId}
                       </dd>
@@ -1641,17 +1916,26 @@ export function DashboardShell({
         </div>
       </DashboardScaffold>
 
-      <Dialog open={isAddressModalOpen} onClose={setIsAddressModalOpen} className="relative z-50">
+      <Dialog
+        open={isAddressModalOpen}
+        onClose={setIsAddressModalOpen}
+        className="relative z-50"
+      >
         <DialogBackdrop className="fixed inset-0 bg-black/40" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <DialogPanel className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-xl dark:bg-gray-900">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Add a new service address</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Add a new service address
+            </h2>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               We will use this address when scheduling recurring services.
             </p>
             <form className="mt-6 space-y-6" onSubmit={handleAddressSubmit}>
               <div>
-                <label htmlFor="modal-label" className="block text-sm font-medium text-gray-900 dark:text-white">
+                <label
+                  htmlFor="modal-label"
+                  className="block text-sm font-medium text-gray-900 dark:text-white"
+                >
                   Address nickname
                 </label>
                 <input
@@ -1659,12 +1943,20 @@ export function DashboardShell({
                   name="modal-label"
                   type="text"
                   value={addressFormState.label}
-                  onChange={(event) => setAddressFormState((prev) => ({ ...prev, label: event.target.value }))}
+                  onChange={(event) =>
+                    setAddressFormState((prev) => ({
+                      ...prev,
+                      label: event.target.value,
+                    }))
+                  }
                   className="mt-2 block w-full rounded-md border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
                 />
               </div>
               <div>
-                <label htmlFor="modal-street" className="block text-sm font-medium text-gray-900 dark:text-white">
+                <label
+                  htmlFor="modal-street"
+                  className="block text-sm font-medium text-gray-900 dark:text-white"
+                >
                   Street address
                 </label>
                 <input
@@ -1672,13 +1964,21 @@ export function DashboardShell({
                   name="modal-street"
                   type="text"
                   value={addressFormState.street}
-                  onChange={(event) => setAddressFormState((prev) => ({ ...prev, street: event.target.value }))}
+                  onChange={(event) =>
+                    setAddressFormState((prev) => ({
+                      ...prev,
+                      street: event.target.value,
+                    }))
+                  }
                   className="mt-2 block w-full rounded-md border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
                 />
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="modal-city" className="block text-sm font-medium text-gray-900 dark:text-white">
+                  <label
+                    htmlFor="modal-city"
+                    className="block text-sm font-medium text-gray-900 dark:text-white"
+                  >
                     City
                   </label>
                   <input
@@ -1686,12 +1986,20 @@ export function DashboardShell({
                     name="modal-city"
                     type="text"
                     value={addressFormState.city}
-                    onChange={(event) => setAddressFormState((prev) => ({ ...prev, city: event.target.value }))}
+                    onChange={(event) =>
+                      setAddressFormState((prev) => ({
+                        ...prev,
+                        city: event.target.value,
+                      }))
+                    }
                     className="mt-2 block w-full rounded-md border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
                   />
                 </div>
                 <div>
-                  <label htmlFor="modal-state" className="block text-sm font-medium text-gray-900 dark:text-white">
+                  <label
+                    htmlFor="modal-state"
+                    className="block text-sm font-medium text-gray-900 dark:text-white"
+                  >
                     State
                   </label>
                   <input
@@ -1699,13 +2007,21 @@ export function DashboardShell({
                     name="modal-state"
                     type="text"
                     value={addressFormState.state}
-                    onChange={(event) => setAddressFormState((prev) => ({ ...prev, state: event.target.value }))}
+                    onChange={(event) =>
+                      setAddressFormState((prev) => ({
+                        ...prev,
+                        state: event.target.value,
+                      }))
+                    }
                     className="mt-2 block w-full rounded-md border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
                   />
                 </div>
               </div>
               <div>
-                <label htmlFor="modal-postal" className="block text-sm font-medium text-gray-900 dark:text-white">
+                <label
+                  htmlFor="modal-postal"
+                  className="block text-sm font-medium text-gray-900 dark:text-white"
+                >
                   ZIP / Postal code
                 </label>
                 <input
@@ -1713,12 +2029,19 @@ export function DashboardShell({
                   name="modal-postal"
                   type="text"
                   value={addressFormState.postalCode}
-                  onChange={(event) => setAddressFormState((prev) => ({ ...prev, postalCode: event.target.value }))}
+                  onChange={(event) =>
+                    setAddressFormState((prev) => ({
+                      ...prev,
+                      postalCode: event.target.value,
+                    }))
+                  }
                   className="mt-2 block w-full rounded-md border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
                 />
               </div>
               {addressError ? (
-                <p className="text-sm text-red-600 dark:text-red-400">{addressError}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {addressError}
+                </p>
               ) : null}
               <div className="flex items-center justify-end gap-x-4">
                 <button

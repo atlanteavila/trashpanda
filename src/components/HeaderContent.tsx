@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import Link from 'next/link'
 import type { Session } from 'next-auth'
@@ -80,12 +80,7 @@ function MobileNavigation({ isAuthenticated }: MobileNavigationProps) {
         <MobileNavLink href="#services">Services</MobileNavLink>
         <MobileNavLink href="#testimonials">Testimonials</MobileNavLink>
         <MobileNavLink href="#pricing">Pricing</MobileNavLink>
-        {isAuthenticated ? (
-          <>
-            <hr className="m-2 border-slate-300/40" />
-            <MobileNavLink href="/dash">Dashboard</MobileNavLink>
-          </>
-        ) : (
+        {isAuthenticated ? null : (
           <>
             <hr className="m-2 border-slate-300/40" />
             <MobileNavLink href="/login">Sign in</MobileNavLink>
@@ -102,7 +97,8 @@ interface HeaderContentProps {
 
 export function HeaderContent({ user }: HeaderContentProps) {
   const isAuthenticated = Boolean(user)
-  const firstName = user?.firstName?.trim() || user?.name?.split(' ')[0] || 'there'
+  const firstName =
+    user?.firstName?.trim() || user?.name?.split(' ')[0] || 'there'
 
   return (
     <header className="py-4">
@@ -110,13 +106,18 @@ export function HeaderContent({ user }: HeaderContentProps) {
         <nav className="relative z-50 flex justify-between">
           <div className="flex items-center md:gap-x-12">
             <Link href="#" aria-label="Home">
-              <Logo className="h-10 w-auto" aria-label="The Trash Panda" />
+              <Logo
+                variant="dark"
+                width={63}
+                height={63}
+                className="h-10 w-auto"
+                aria-label="The Trash Panda"
+              />
             </Link>
             <div className="hidden md:flex md:gap-x-6">
               <NavLink href="#services">Services</NavLink>
               <NavLink href="#testimonials">Testimonials</NavLink>
               <NavLink href="#pricing">Pricing</NavLink>
-              {isAuthenticated ? <NavLink href="/dash">Dashboard</NavLink> : null}
             </div>
           </div>
           <div className="flex items-center gap-x-5 md:gap-x-8">
@@ -126,9 +127,7 @@ export function HeaderContent({ user }: HeaderContentProps) {
                   Hello {firstName}!
                 </span>
                 <Button href="/dash" color="green">
-                  <span>
-                    Manage services
-                  </span>
+                  <span>Manage services</span>
                 </Button>
               </>
             ) : (

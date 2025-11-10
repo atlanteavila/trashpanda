@@ -119,7 +119,7 @@ export async function POST(request: Request) {
         notes,
       }
     })
-    .filter((service): service is NormalizedService => Boolean(service))
+    .filter((service): service is any => Boolean(service))
 
   if (services.length === 0) {
     return NextResponse.json({ error: 'Add at least one service before checking out.' }, { status: 400 })
@@ -178,7 +178,7 @@ export async function POST(request: Request) {
       addressPostalCode: postalCode,
       addressSummary,
       preferredServiceDay,
-      services: services.map((service) => ({
+      services: services.map((service: any) => ({
         id: service.id,
         name: service.name,
         frequency: service.frequency,
