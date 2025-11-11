@@ -125,10 +125,14 @@ export default async function Register({
           label="How did you hear about us?"
           name="referral_source"
         >
-          <option>AltaVista search</option>
-          <option>Super Bowl commercial</option>
-          <option>Our route 34 city bus ad</option>
-          <option>The “Never Use This” podcast</option>
+          <option value="">Select an option</option>
+          <option>Facebook</option>
+          <option>Google</option>
+          <option>Bing</option>
+          <option>Duck Duck Go</option>
+          <option>Yahoo</option>
+          <option>Flyer</option>
+          <option>Friend</option>
         </SelectField>
         <div className="col-span-full">
           <label className="flex items-start gap-3 text-sm text-gray-700">
