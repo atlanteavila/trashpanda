@@ -131,6 +131,26 @@ export default async function Register({
           <option>The “Never Use This” podcast</option>
         </SelectField>
         <div className="col-span-full">
+          <label className="flex items-start gap-3 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              name="terms"
+              required
+              className="mt-1 size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span>
+              I have read and agree to the{' '}
+              <Link
+                href="/terms-of-service"
+                className="font-medium text-green-600 hover:underline"
+              >
+                Terms of Service
+              </Link>
+              .
+            </span>
+          </label>
+        </div>
+        <div className="col-span-full">
           <Button type="submit" variant="solid" color="green" className="w-full">
             <span>
               Sign up <span aria-hidden="true">&rarr;</span>

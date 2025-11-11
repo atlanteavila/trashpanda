@@ -32,6 +32,7 @@ export async function POST(request: Request) {
   const city = getStringValue(formData.get('city'))
   const state = getStringValue(formData.get('state'))
   const postalCode = getStringValue(formData.get('postal_code'))
+  const acceptedTerms = formData.get('terms')
 
   if (!firstName || !lastName || !email || !password) {
     return buildErrorRedirect(request, 'Please complete all required fields.')
@@ -39,6 +40,13 @@ export async function POST(request: Request) {
 
   if (!street || !city || !state || !postalCode) {
     return buildErrorRedirect(request, 'Please provide a complete service address.')
+  }
+
+  if (acceptedTerms !== 'on') {
+    return buildErrorRedirect(
+      request,
+      'Please review and accept the Terms of Service to continue.',
+    )
   }
 
   if (password.length < 8) {
