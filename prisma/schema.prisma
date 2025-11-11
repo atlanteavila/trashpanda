@@ -96,6 +96,7 @@ model CheckoutSession {
   addressSummary       String
   services             Json
   monthlyTotal         Float?
+  accessNotes          String?
   stripeStatus         String?
   stripePaymentStatus  String?
   stripeCustomerId     String?
@@ -129,6 +130,7 @@ model Subscription {
   preferredServiceDay  String?
   services             Json
   monthlyTotal         Float?
+  accessNotes          String?
   status               SubscriptionStatus @default(ACTIVE)
   stripeCustomerId     String?
   stripeSubscriptionId String?

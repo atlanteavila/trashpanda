@@ -4,7 +4,7 @@ import { Container } from '@/components/Container'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 
-const LAST_UPDATED = 'August 30, 2024'
+const LAST_UPDATED = 'September 2, 2024'
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -40,6 +40,12 @@ export default function TermsOfServicePage() {
                 We will confirm the final scope and price with you before work begins
                 if the area exceeds the standard coverage or requires additional time.
               </p>
+              <p className="text-base text-slate-700">
+                Seasonal yard raking, backyard cleanups, and trash can return routes
+                are confirmed after an on-site review. Final pricing is confirmed
+                after our visit—larger properties or extended can distances may incur
+                a small additional fee so we can staff appropriately for the work.
+              </p>
             </section>
 
             <section className="space-y-3">
@@ -50,6 +56,12 @@ export default function TermsOfServicePage() {
                 areas, or conditions identified during the initial walk-through may
                 require a revised quote. You will receive and approve any adjusted
                 pricing before service begins.
+              </p>
+              <p className="text-base text-slate-700">
+                If we discover larger service areas, excessive debris, or long
+                distances between your cans and the curb, we will outline any
+                supplemental fee before the job starts. Your approval is required
+                before we proceed with the updated price.
               </p>
             </section>
 
@@ -71,6 +83,12 @@ export default function TermsOfServicePage() {
                 from inaccessible areas or inaccurate information may be charged at the
                 regular rate. Please notify us of any hazards or special instructions
                 before your appointment.
+              </p>
+              <p className="text-base text-slate-700">
+                Use the instructions section during checkout or inside your account to
+                share gate codes, pet care considerations, parking notes, or other
+                access details. Clear guidance helps us arrive prepared and keeps your
+                appointment on schedule.
               </p>
             </section>
 

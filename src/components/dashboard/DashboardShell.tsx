@@ -77,6 +77,7 @@ export interface SubscriptionSnapshot {
   serviceDay: string | null
   services: SubscriptionServiceSnapshot[]
   monthlyTotal: number | null
+  accessNotes: string | null
   status: SubscriptionStatus
   stripeStatus?: string | null
   stripePaymentStatus?: string | null
@@ -97,7 +98,8 @@ const serviceCatalog: ServiceDefinition[] = [
     name: 'Trash Can Take-Out & Return',
     frequency: 'Weekly',
     monthlyRate: 19.99,
-    notes: 'Base subscription covering weekly curbside service.',
+    notes:
+      'Base subscription covering weekly curbside service. Final pricing confirmed after visit—larger properties or extended can distances may incur a small additional fee.',
     required: true,
     allowQuantity: false,
     defaultQuantity: 1,
@@ -119,7 +121,8 @@ const serviceCatalog: ServiceDefinition[] = [
     frequency: 'Bi-weekly (2 visits per month)',
     monthlyRate: 15,
     unitLabel: 'visits / month',
-    notes: 'Priced per visit; twice monthly service keeps yards guest-ready.',
+    notes:
+      'Priced per visit; twice monthly service keeps yards guest-ready. Final pricing confirmed after visit—larger yards or extended can distances may incur a small additional fee.',
     allowQuantity: true,
     minQuantity: 1,
     defaultQuantity: 2,
@@ -141,7 +144,8 @@ const serviceCatalog: ServiceDefinition[] = [
     frequency: 'Seasonal (Autumn focus)',
     monthlyRate: Number((25 / 3).toFixed(2)),
     unitLabel: 'visits / season',
-    notes: 'Averaged across a three-month fall season ($25 per visit).',
+    notes:
+      'Averaged across a three-month fall season ($25 per visit). Final pricing confirmed after visit—larger properties or extended can distances may incur a small additional fee.',
     allowQuantity: true,
     minQuantity: 1,
     defaultQuantity: 1,
@@ -461,6 +465,9 @@ export function DashboardShell({
   const [selectedServices, setSelectedServices] = useState<
     Record<ServiceId, ServiceSelection>
   >(() => createServiceConfigurationFromSubscription(defaultSubscription))
+  const [accessNotes, setAccessNotes] = useState(
+    defaultSubscription?.accessNotes ?? '',
+  )
 
   const calculateConfigurationTotal = useCallback(
     (configuration: Record<ServiceId, ServiceSelection>) => {
@@ -832,6 +839,7 @@ export function DashboardShell({
     selectedServices,
     serviceDay,
     termsAccepted,
+    accessNotes,
   ])
 
   useEffect(() => {
@@ -845,6 +853,7 @@ export function DashboardShell({
       setSubscriptionStatus('ACTIVE')
       setServiceDay('')
       setFormStatus('idle')
+      setAccessNotes('')
       return
     }
 
@@ -874,6 +883,7 @@ export function DashboardShell({
     setFormStatus('idle')
     setCheckoutNotice(null)
     setTermsAccepted(true)
+    setAccessNotes(activeSubscription.accessNotes ?? '')
   }, [activeSubscription, initialAddresses, isEditMode])
   const handlePrimaryAction = useCallback(async () => {
     if (checkoutStatus === 'loading') {
@@ -915,6 +925,8 @@ export function DashboardShell({
       return
     }
 
+    const trimmedAccessNotes = accessNotes.trim().slice(0, 1000)
+
     try {
       setCheckoutStatus('loading')
       setCheckoutError('')
@@ -936,6 +948,7 @@ export function DashboardShell({
               total: monthlyTotal,
               status: subscriptionStatus,
               serviceDay: serviceDay || null,
+              accessNotes: trimmedAccessNotes || null,
             }),
           },
         )
@@ -974,6 +987,7 @@ export function DashboardShell({
             serviceDay: data.subscription.preferredServiceDay ?? null,
             services: data.subscription.services ?? [],
             monthlyTotal: data.subscription.monthlyTotal ?? null,
+            accessNotes: data.subscription.accessNotes ?? null,
             status: data.subscription.status,
             stripeStatus: data.subscription.stripeStatus ?? null,
             stripePaymentStatus: data.subscription.stripePaymentStatus ?? null,
@@ -1006,6 +1020,7 @@ export function DashboardShell({
             planName,
             total: monthlyTotal,
             serviceDay: serviceDay || null,
+            accessNotes: trimmedAccessNotes || null,
           }),
         })
 
@@ -1042,6 +1057,7 @@ export function DashboardShell({
       setCheckoutStatus('idle')
     }
   }, [
+    accessNotes,
     activeAddress,
     activePlanId,
     activeSubscription,
@@ -1674,6 +1690,38 @@ export function DashboardShell({
                   </div>
                 </div>
 
+                <div className="border-b border-gray-900/10 pb-12 dark:border-white/10">
+                  <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">
+                    Property instructions
+                  </h2>
+                  <p className="mt-1 text-sm/6 text-gray-600 dark:text-gray-400">
+                    Share gate codes, pet considerations, parking tips, or anything else we should know before arriving.
+                  </p>
+                  <div className="mt-6">
+                    <label
+                      htmlFor="access-notes"
+                      className="block text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                      Access notes
+                    </label>
+                    <textarea
+                      id="access-notes"
+                      name="access-notes"
+                      maxLength={1000}
+                      value={accessNotes}
+                      onChange={(event) => {
+                        setAccessNotes(event.target.value)
+                        setFormStatus('idle')
+                      }}
+                      rows={4}
+                      className="mt-2 block w-full rounded-md border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:border-white/10 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500"
+                    />
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                      Final pricing is confirmed after our visit—larger properties or extended can distances may include a small additional fee.
+                    </p>
+                  </div>
+                </div>
+
                 {isEditMode ? (
                   <div className="border-b border-gray-900/10 pb-12 dark:border-white/10">
                     <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">
@@ -1753,6 +1801,15 @@ export function DashboardShell({
                         The $25 porch and driveway blow service covers up to 500
                         square feet and is priced as an estimate. We will confirm
                         final pricing before work begins.
+                      </li>
+                      <li>
+                        Final pricing is confirmed after our visit—larger properties
+                        or extended can distances may incur a small additional fee.
+                      </li>
+                      <li>
+                        Use the property instructions field above to share gate codes,
+                        pet care notes, or safety details so our crew can access your
+                        space smoothly.
                       </li>
                       <li>
                         Review the full{' '}

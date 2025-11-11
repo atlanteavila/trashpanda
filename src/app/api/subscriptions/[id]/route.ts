@@ -57,6 +57,7 @@ type UpdateSubscriptionPayload = {
   total?: number | null
   status?: SubscriptionStatus | string | null
   serviceDay?: string | null
+  accessNotes?: string | null
 }
 
 function normalizeStatus(value: string | SubscriptionStatus | null | undefined): SubscriptionStatus | null {
@@ -178,6 +179,12 @@ export async function PATCH(
   const preferredServiceDay = hasServiceDay
     ? normalizeServiceDay(payload.serviceDay) ?? null
     : existing.preferredServiceDay ?? null
+  const normalizedAccessNotes =
+    typeof payload.accessNotes === 'string'
+      ? payload.accessNotes.trim().slice(0, 1000)
+      : payload.accessNotes === null
+        ? null
+        : existing.accessNotes ?? null
 
   const updated = await subscriptions.update({
     where: { id: existing.id },
@@ -194,6 +201,7 @@ export async function PATCH(
       services,
       monthlyTotal: safeTotal,
       status: normalizedStatus,
+      accessNotes: normalizedAccessNotes && normalizedAccessNotes.length > 0 ? normalizedAccessNotes : null,
     },
   })
 
@@ -212,6 +220,7 @@ export async function PATCH(
       preferredServiceDay: updated.preferredServiceDay,
       services: updated.services,
       monthlyTotal: updated.monthlyTotal,
+      accessNotes: updated.accessNotes,
       status: updated.status,
       stripeStatus: updated.stripeStatus,
       stripePaymentStatus: updated.stripePaymentStatus,
