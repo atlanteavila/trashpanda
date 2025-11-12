@@ -80,6 +80,7 @@ function MobileNavigation({ isAuthenticated }: MobileNavigationProps) {
         <MobileNavLink href="/#services">Services</MobileNavLink>
         <MobileNavLink href="/#testimonials">Testimonials</MobileNavLink>
         <MobileNavLink href="/#pricing">Pricing</MobileNavLink>
+        <MobileNavLink href="/contact">Contact</MobileNavLink>
         {isAuthenticated ? null : (
           <>
             <hr className="m-2 border-slate-300/40" />
@@ -118,6 +119,7 @@ export function HeaderContent({ user }: HeaderContentProps) {
               <NavLink href="/#services">Services</NavLink>
               <NavLink href="/#testimonials">Testimonials</NavLink>
               <NavLink href="/#pricing">Pricing</NavLink>
+              <NavLink href="/contact">Contact</NavLink>
             </div>
           </div>
           <div className="flex items-center gap-x-5 md:gap-x-8">
