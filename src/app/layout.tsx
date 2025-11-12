@@ -20,6 +20,12 @@ export default function RootLayout({
       lang="en"
       className="h-full scroll-smooth bg-white antialiased dark:bg-gray-900"
     >
+      <head>
+        <meta
+          name="msvalidate.01"
+          content="1374FA3081CE62881036F1D26F825697"
+        />
+      </head>
       <body className="flex h-full flex-col bg-white dark:bg-gray-900">{children}</body>
     </html>
   )
