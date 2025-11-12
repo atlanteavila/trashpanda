@@ -1,7 +1,7 @@
 import { type MetadataRoute } from 'next'
 
 // Use an environment-aware base URL so the sitemap stays canonical across deployments (SEO best practice).
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com'
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://thetrashpanda.net'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   // Hash fragments are intentionally omitted because search crawlers ignore them entirely.

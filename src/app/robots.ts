@@ -1,7 +1,7 @@
 import { type MetadataRoute } from 'next'
 
 // Reuse the canonical origin so crawlers discover the sitemap URL in every environment (SEO best practice).
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com'
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://thetrashpanda.net'
 
 export default function robots(): MetadataRoute.Robots {
   return {
