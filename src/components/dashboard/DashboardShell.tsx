@@ -1859,9 +1859,6 @@ export function DashboardShell({
                       ) : null}
                     </div>
                     <div className="flex flex-col gap-3 sm:flex-row">
-                      <Button type="submit" variant="outline">
-                        {isEditMode ? 'Save changes' : 'Save subscription'}
-                      </Button>
                       <Button
                         type="button"
                         color="green"
