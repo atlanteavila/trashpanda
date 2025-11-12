@@ -9,6 +9,8 @@ import { US_STATES } from '@/lib/us-states'
 
 export const metadata: Metadata = {
   title: 'Sign Up',
+  // Prevent indexing of the registration page to avoid exposing low-quality auth screens.
+  robots: { index: false, follow: false },
 }
 
 type RegisterSearchParams = {

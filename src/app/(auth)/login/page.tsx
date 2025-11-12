@@ -7,6 +7,8 @@ import { LoginForm } from '@/components/auth/LoginForm'
 
 export const metadata: Metadata = {
   title: 'Sign In',
+  // Prevent indexing of the login page to reduce crawl waste and protect auth-only flows.
+  robots: { index: false, follow: false },
 }
 
 type LoginSearchParams = {
