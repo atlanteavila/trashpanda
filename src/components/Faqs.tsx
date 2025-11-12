@@ -6,16 +6,20 @@ import backgroundImage from '@/images/background-faqs.jpg'
 const faqs = [
   [
     {
-      question: 'Is tax included?',
-      answer:
-        'All taxes should be calculated at check out.',
+      question: 'How do trash-bin pickups work?',
+      answer: 'We come to your house the day before the city collects your trash bins. We set them on the curb for you and put them back at the end of the day. Bin cleaning services will be rendered on Weekends.',
     },
     {
-      question: 'Can I pay by cash or check?',
-      answer: 'We only accept credit card payments via our website at the moment. Check back soon though. This might change!',
+      question: 'Is tax included?',
+      answer: 'All taxes should be calculated at check out.',
     },
   ],
   [
+    {
+      question: 'Which areas do you currently serve?',
+      answer:
+        'We serve Pinehurst and surrounding cities: Aberdeen, Southern Pines. If business needs allow we might be able to service most of Moore County.',
+    },
     {
       question: 'Can I schedule a one-off service?',
       answer:
@@ -23,7 +27,11 @@ const faqs = [
     },
   ],
   [
-   
+    {
+      question: 'Can I pay by cash or check?',
+      answer:
+        'We only accept credit card payments via our website at the moment. Check back soon though. This might change!',
+    },
   ],
 ]
 
@@ -51,7 +59,8 @@ export function Faqs() {
             Frequently asked questions
           </h2>
           <p className="mt-4 text-lg tracking-tight text-slate-700">
-            Here's some of the FAQs we've encountered so far. Let us know if you have any more questions!
+            Here's some of the FAQs we've encountered so far. Let us know if you
+            have any more questions!
           </p>
         </div>
         <ul
