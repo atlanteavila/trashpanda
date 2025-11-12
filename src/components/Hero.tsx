@@ -1,5 +1,6 @@
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
+import { CurrencyDollarIcon } from '@heroicons/react/24/outline'
 
 export function Hero() {
   return (
@@ -25,19 +26,14 @@ export function Hero() {
         affordable, and right here in Pinehurst, NC — your local helping hand
         for life’s little chores.
       </p>
-      <div className="mt-10 flex justify-center gap-x-6">
+      <div className="mt-10 flex justify-center gap-x-3">
         <Button href="/register">Get started today!</Button>
         <Button
-          href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+          href="/#pricing"
           variant="outline"
         >
-          <svg
-            aria-hidden="true"
-            className="h-3 w-3 flex-none fill-green-600 group-active:fill-current"
-          >
-            <path d="m9.997 6.91-7.583 3.447A1 1 0 0 1 1 9.447V2.553a1 1 0 0 1 1.414-.91L9.997 5.09c.782.355.782 1.465 0 1.82Z" />
-          </svg>
-          <span className="ml-3">Watch video</span>
+          <CurrencyDollarIcon />
+          <span className="ml-3">Pricing</span>
         </Button>
       </div>
     </Container>

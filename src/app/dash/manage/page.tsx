@@ -127,6 +127,7 @@ export default async function ManageSubscriptionsPage() {
     serviceDay: subscription.preferredServiceDay ?? null,
     services: parseSubscriptionServices(subscription.services),
     monthlyTotal: subscription.monthlyTotal,
+    accessNotes: subscription.accessNotes ?? null,
     status: subscription.status,
     stripeStatus: subscription.stripeStatus,
     stripePaymentStatus: subscription.stripePaymentStatus,

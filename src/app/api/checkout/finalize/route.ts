@@ -169,6 +169,10 @@ export async function POST(request: Request) {
     stripeSession && typeof stripeSession.customer === 'string' ? stripeSession.customer : null
   const stripeSubscriptionId =
     stripeSession && typeof stripeSession.subscription === 'string' ? stripeSession.subscription : null
+  const stripeAccessNotes =
+    typeof stripeSession?.metadata?.accessNotes === 'string'
+      ? stripeSession.metadata.accessNotes.trim().slice(0, 1000)
+      : ''
 
   await checkoutSessions.update({
     where: { id: checkoutRecord.id },
@@ -189,6 +193,11 @@ export async function POST(request: Request) {
       normalizeServiceDay(checkoutRecord.preferredServiceDay) ??
       normalizeServiceDay(stripeSession?.metadata?.preferredServiceDay) ??
       null
+    const normalizedCheckoutAccessNotes =
+      typeof checkoutRecord.accessNotes === 'string'
+        ? checkoutRecord.accessNotes.trim()
+        : ''
+    const accessNotes = normalizedCheckoutAccessNotes || stripeAccessNotes || null
     const subscriptionPayload = {
       userId: session.user.id,
       planId: checkoutRecord.planId ?? null,
@@ -202,6 +211,7 @@ export async function POST(request: Request) {
       preferredServiceDay: normalizedServiceDay,
       services,
       monthlyTotal: checkoutRecord.monthlyTotal ?? null,
+      accessNotes,
       status: SubscriptionStatus.ACTIVE,
       stripeCustomerId,
       stripeSubscriptionId,

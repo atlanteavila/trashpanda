@@ -57,6 +57,7 @@ type CheckoutRequestPayload = {
   planName?: string | null
   total?: number
   serviceDay?: string | null
+  accessNotes?: string | null
 }
 
 type NormalizedService = {
@@ -146,6 +147,11 @@ export async function POST(request: Request) {
       ? payload.total
       : null
 
+  const accessNotes =
+    typeof payload.accessNotes === 'string'
+      ? payload.accessNotes.trim().slice(0, 1000)
+      : ''
+
   const baseUrl = getAppBaseUrl(request)
 
   const label = addressPayload.label?.trim() ?? null
@@ -187,6 +193,7 @@ export async function POST(request: Request) {
         notes: service.notes ?? null,
       })),
       monthlyTotal: safeTotal,
+      accessNotes: accessNotes ? accessNotes : null,
     },
   })
 
@@ -213,6 +220,7 @@ export async function POST(request: Request) {
         monthlyTotal: safeTotal ? safeTotal.toFixed(2) : '',
         checkoutSessionId: checkoutRecord.id,
         preferredServiceDay: preferredServiceDay ?? '',
+        accessNotes: accessNotes ? accessNotes.slice(0, 500) : '',
       },
     })
 

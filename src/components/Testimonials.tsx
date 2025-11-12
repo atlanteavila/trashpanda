@@ -11,60 +11,33 @@ const testimonials = [
   [
     {
       content:
-        'The Trash Panda is so easy to use It is a low cost subscription service that handles your menial tasks on a daily, weekly, monthly basis.',
+        'The Trash Panda is so easy to use It is a low cost subscription service that handles things I really don\'t like to do',
       author: {
-        name: 'Sheryl Berge',
-        role: 'CEO at Lynch LLC',
+        name: 'Sheryl B.',
+        role: 'Pinehurst No. 6',
         image: avatarImage1,
       },
     },
-    {
-      content:
-        'I’m trying to get a hold of someone in support, I’m in a lot of trouble right now and they are saying it has something to do with my books. Please get back to me right away.',
-      author: {
-        name: 'Amy Hahn',
-        role: 'Director at Velocity Industries',
-        image: avatarImage4,
-      },
-    },
   ],
   [
     {
       content:
-        'The best part about The Trash Panda is every time I pay my employees, my bank balance doesn’t go down like it used to. Looking forward to spending this extra cash when I figure out why my card is being declined.',
+        'So convinient, love the worrry free service and we especially love it when out of town!',
       author: {
-        name: 'Leland Kiehn',
-        role: 'Founder of Kiehn and Sons',
+        name: 'Adam L.',
+        role: 'Aberdeen',
         image: avatarImage5,
       },
     },
-    {
-      content:
-        'There are so many things I had to do with my old software that I just don’t do at all with The Trash Panda. Suspicious but I can’t say I don’t love it.',
-      author: {
-        name: 'Erin Powlowski',
-        role: 'COO at Armstrong Inc',
-        image: avatarImage2,
-      },
-    },
   ],
   [
     {
       content:
-        'I used to have to remit tax to the EU and with The Trash Panda I somehow don’t have to do that anymore. Nervous to travel there now though.',
+        'The Trash Panda has made our home presentable and we no longer have to worry about trash day...Not to mention the clean cans.',
       author: {
-        name: 'Peter Renolds',
-        role: 'Founder of West Inc',
+        name: 'Mike S.',
+        role: 'Pinehurst No. 6',
         image: avatarImage3,
-      },
-    },
-    {
-      content:
-        'This is the fourth email I’ve sent to your support team. I am literally being held in jail for tax fraud. Please answer your damn emails, this is important.',
-      author: {
-        name: 'Amy Hahn',
-        role: 'Director at Velocity Industries',
-        image: avatarImage4,
       },
     },
   ],

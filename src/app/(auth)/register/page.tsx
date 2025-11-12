@@ -125,11 +125,35 @@ export default async function Register({
           label="How did you hear about us?"
           name="referral_source"
         >
-          <option>AltaVista search</option>
-          <option>Super Bowl commercial</option>
-          <option>Our route 34 city bus ad</option>
-          <option>The “Never Use This” podcast</option>
+          <option value="">Select an option</option>
+          <option>Facebook</option>
+          <option>Google</option>
+          <option>Bing</option>
+          <option>Duck Duck Go</option>
+          <option>Yahoo</option>
+          <option>Flyer</option>
+          <option>Friend</option>
         </SelectField>
+        <div className="col-span-full">
+          <label className="flex items-start gap-3 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              name="terms"
+              required
+              className="mt-1 size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span>
+              I have read and agree to the{' '}
+              <Link
+                href="/terms-of-service"
+                className="font-medium text-green-600 hover:underline"
+              >
+                Terms of Service
+              </Link>
+              .
+            </span>
+          </label>
+        </div>
         <div className="col-span-full">
           <Button type="submit" variant="solid" color="green" className="w-full">
             <span>
