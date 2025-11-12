@@ -59,7 +59,7 @@ export function Faqs() {
             Frequently asked questions
           </h2>
           <p className="mt-4 text-lg tracking-tight text-slate-700">
-            Here's some of the FAQs we've encountered so far. Let us know if you
+            Here are some of the FAQs we have encountered so far. Let us know if you
             have any more questions!
           </p>
         </div>
