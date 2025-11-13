@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 import { Container } from '@/components/Container'
+import backgroundImage from '@/images/background-features.jpg'
 import BundledServices from '@/images/screenshots/bundled-services.png'
 import CanServices from '@/images/screenshots/can-services.png'
 import CleanBins from '@/images/screenshots/clean-bins.png'
@@ -48,8 +49,16 @@ const services = [
 
 export function HomeServicesShowcase() {
   return (
-    <section className="relative overflow-hidden bg-[#005413] py-24 sm:py-32">
-      <Container>
+    <section className="relative overflow-hidden bg-[#005413] pt-20 pb-28 sm:py-32">
+      <Image
+        className="absolute top-1/2 left-1/2 max-w-none translate-x-[-44%] translate-y-[-42%]"
+        src={backgroundImage}
+        alt=""
+        width={2245}
+        height={1636}
+        unoptimized
+      />
+      <Container className="relative">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="font-display text-3xl tracking-tight text-white sm:text-4xl">
             Choose the curbside care that fits your life
@@ -59,34 +68,43 @@ export function HomeServicesShowcase() {
             to explore.
           </p>
         </div>
-        <div className="mt-16 grid gap-10 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-20 grid gap-12 sm:mt-24 md:grid-cols-2">
           {services.map((service) => (
             <article
               key={service.name}
-              className="flex flex-col overflow-hidden rounded-3xl bg-white shadow-xl shadow-green-900/20"
+              className="relative flex flex-col overflow-hidden rounded-[2.25rem] bg-white/95 px-8 pb-10 pt-28 shadow-2xl shadow-green-900/30 ring-1 ring-white/20"
             >
-              <div className="relative aspect-[4/3] w-full">
-                <Image
-                  src={service.image}
-                  alt={service.imageAlt}
-                  className="h-full w-full object-cover"
-                  fill
-                  sizes="(min-width: 1280px) 18rem, (min-width: 640px) 50vw, 100vw"
-                  priority
-                />
-              </div>
-              <div className="flex flex-1 flex-col gap-4 px-6 pb-6 pt-8">
-                <p className="text-xs font-semibold uppercase tracking-wide text-green-700">{service.label}</p>
-                <h3 className="text-2xl font-semibold tracking-tight text-slate-900">{service.name}</h3>
-                <p className="flex-1 text-sm leading-6 text-slate-600">{service.description}</p>
-                <div>
-                  <Link
-                    href={service.href}
-                    className="text-sm font-semibold text-green-700 transition hover:text-green-500"
-                  >
-                    Learn more <span aria-hidden="true">→</span>
-                  </Link>
+              <div className="absolute inset-x-10 -top-16">
+                <div className="relative">
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-8 bottom-2 h-16 rounded-full bg-green-600/40 blur-xl"
+                  />
+                  <div className="relative overflow-hidden rounded-[1.75rem] bg-white shadow-xl shadow-green-900/30 ring-1 ring-green-900/10">
+                    <div className="relative aspect-[4/3]">
+                      <Image
+                        src={service.image}
+                        alt={service.imageAlt}
+                        fill
+                        sizes="(min-width: 1024px) 32rem, (min-width: 768px) 45vw, 90vw"
+                        priority
+                        className="origin-bottom -rotate-3 translate-y-6 scale-110 object-cover"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 h-8 bg-white" />
+                    </div>
+                  </div>
                 </div>
+              </div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-green-700">{service.label}</p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">{service.name}</h3>
+              <p className="mt-4 flex-1 text-sm leading-6 text-slate-600">{service.description}</p>
+              <div className="mt-6">
+                <Link
+                  href={service.href}
+                  className="text-sm font-semibold text-green-700 transition hover:text-green-500"
+                >
+                  Learn more <span aria-hidden="true">→</span>
+                </Link>
               </div>
             </article>
           ))}
