@@ -72,41 +72,37 @@ export function HomeServicesShowcase() {
           {services.map((service) => (
             <article
               key={service.name}
-              className="relative flex flex-col overflow-hidden rounded-[2.25rem] bg-white/95 px-8 pb-10 pt-28 shadow-2xl shadow-green-900/30 ring-1 ring-white/20"
+              className="relative flex flex-col overflow-hidden rounded-[2.25rem] bg-white/95 px-8 pb-10 pt-12 shadow-2xl shadow-green-900/30 ring-1 ring-white/20"
             >
-              <div className="absolute inset-x-10 -top-20">
-                <div className="relative">
-                  <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-8 bottom-3 h-16 rounded-full bg-green-600/45 blur-xl"
-                  />
-                  <div className="relative mx-auto max-w-[30rem] overflow-visible">
-                    <div className="relative mx-auto aspect-[4/3]">
-                      <div className="absolute inset-0 -rotate-3">
-                        <div className="absolute inset-0 translate-y-6 scale-110">
-                          <div className="relative h-full w-full overflow-visible">
-                            <div className="relative h-full w-full overflow-hidden rounded-[1.75rem] bg-white shadow-xl shadow-green-900/30 ring-1 ring-green-900/10">
-                              <div className="absolute inset-0 [clip-path:polygon(0%_0%,100%_0%,100%_82%,0%_100%)]">
-                                <Image
-                                  src={service.image}
-                                  alt={service.imageAlt}
-                                  fill
-                                  sizes="(min-width: 1024px) 32rem, (min-width: 768px) 45vw, 90vw"
-                                  priority
-                                  className="object-cover"
-                                />
-                              </div>
-                              <div
-                                aria-hidden="true"
-                                className="absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/70"
-                              />
-                              <div
-                                aria-hidden="true"
-                                className="absolute inset-x-0 bottom-[-2px] h-10 [clip-path:polygon(0%_0%,100%_20%,100%_100%,0%_100%)] bg-white"
-                              />
-                            </div>
+              <div className="relative -mt-24 mb-8 self-center w-full max-w-[30rem]">
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-10 bottom-[-1.25rem] h-16 rounded-full bg-green-600/45 blur-xl"
+                />
+                <div className="relative aspect-[4/3]">
+                  <div className="absolute inset-0 -rotate-3">
+                    <div className="relative h-full w-full overflow-visible">
+                      <div className="relative h-full w-full overflow-hidden rounded-[1.75rem] bg-white shadow-xl shadow-green-900/30 ring-1 ring-green-900/10">
+                        <div className="absolute inset-0 overflow-hidden">
+                          <div className="relative h-full w-full [clip-path:polygon(0%_0%,100%_0%,100%_80%,0%_100%)]">
+                            <Image
+                              src={service.image}
+                              alt={service.imageAlt}
+                              fill
+                              sizes="(min-width: 1024px) 32rem, (min-width: 768px) 45vw, 90vw"
+                              priority
+                              className="object-cover"
+                            />
                           </div>
                         </div>
+                        <div
+                          aria-hidden="true"
+                          className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/70"
+                        />
+                        <div
+                          aria-hidden="true"
+                          className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-12 bg-white [clip-path:polygon(0%_0%,100%_32%,100%_100%,0%_100%)]"
+                        />
                       </div>
                     </div>
                   </div>
