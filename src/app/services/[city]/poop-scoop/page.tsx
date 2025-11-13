@@ -111,7 +111,7 @@ export default function PoopScoopPage({ params }: PoopScoopPageProps) {
     <div className="bg-white py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">
+          <p className="text-sm font-semibold uppercase tracking-wide text-green-600">
             {formattedCity} • Pet waste removal experts
           </p>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-5xl lg:text-balance">
@@ -122,13 +122,13 @@ export default function PoopScoopPage({ params }: PoopScoopPageProps) {
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center rounded-md bg-indigo-600 px-5 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+              className="inline-flex items-center justify-center rounded-md bg-green-600 px-5 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-green-500"
             >
               Book a cleaning
             </Link>
             <Link
               href="tel:+17206072472"
-              className="inline-flex items-center justify-center rounded-md border border-indigo-100 px-5 py-3 text-base font-semibold text-indigo-600 transition hover:border-indigo-200 hover:text-indigo-500"
+              className="inline-flex items-center justify-center rounded-md border border-green-100 px-5 py-3 text-base font-semibold text-green-600 transition hover:border-green-200 hover:text-green-500"
             >
               Call (720) 607-2472
             </Link>
@@ -139,7 +139,7 @@ export default function PoopScoopPage({ params }: PoopScoopPageProps) {
             {featureHighlights.map((feature) => (
               <div key={feature.name} className="flex flex-col">
                 <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-gray-900">
-                  <feature.icon aria-hidden="true" className="h-5 w-5 flex-none text-indigo-600" />
+                  <feature.icon aria-hidden="true" className="h-5 w-5 flex-none text-green-600" />
                   {feature.name}
                 </dt>
                 <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
@@ -147,7 +147,7 @@ export default function PoopScoopPage({ params }: PoopScoopPageProps) {
                   <p className="mt-6">
                     <Link
                       href="/contact"
-                      className="text-sm font-semibold leading-6 text-indigo-600 transition hover:text-indigo-500"
+                      className="text-sm font-semibold leading-6 text-green-600 transition hover:text-green-500"
                     >
                       Request a custom plan <span aria-hidden="true">→</span>
                     </Link>
@@ -172,7 +172,7 @@ export default function PoopScoopPage({ params }: PoopScoopPageProps) {
             enjoying life outside.
           </p>
         </div>
-        <div className="mx-auto mt-24 max-w-3xl rounded-3xl border border-indigo-100 bg-indigo-50/60 p-10 text-center">
+        <div className="mx-auto mt-24 max-w-3xl rounded-3xl border border-green-100 bg-green-50 p-10 text-center">
           <h2 className="text-2xl font-semibold tracking-tight text-gray-900">
             Ready for a fresher yard in {formattedCity}?
           </h2>
@@ -183,13 +183,13 @@ export default function PoopScoopPage({ params }: PoopScoopPageProps) {
           <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center rounded-md bg-indigo-600 px-5 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+              className="inline-flex items-center justify-center rounded-md bg-green-600 px-5 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-green-500"
             >
               Get your quote
             </Link>
             <Link
               href="mailto:hello@thetrashpanda.com"
-              className="text-base font-semibold text-indigo-600 transition hover:text-indigo-500"
+              className="text-base font-semibold text-green-600 transition hover:text-green-500"
             >
               hello@thetrashpanda.com
             </Link>
