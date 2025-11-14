@@ -48,7 +48,7 @@ const getCityCopy = (city: string) => {
     headline: `${formattedCity} trash can concierge service made effortless`,
     intro: `Trash day is handled for you. The Trash Panda crew stages and returns cans for busy households across ${formattedCity}.`,
     description:
-      `Customized reminders, photo confirmation, and wind-safe placement keep your curb tidy while you stay focused on what matters most.`,
+      `Customized reminders, and photo confirmation, keep your curb tidy while you stay focused on what matters most.`,
   }
 }
 
@@ -118,8 +118,8 @@ export default async function TrashCanServicePage({ params }: TrashCanServicePag
           <h1 className="mt-2 text-4xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-5xl lg:text-balance">
             {headline}
           </h1>
-          <p className="mt-6 text-lg leading-8 text-gray-600">{intro}</p>
-          <p className="mt-4 text-base leading-7 text-gray-600">{description}</p>
+          <p className="mt-6 text-lg leading-8 text-gray-800">{intro}</p>
+          <p className="mt-4 text-base leading-7 text-gray-800">{description}</p>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
             <Link
               href="/contact"
@@ -143,7 +143,7 @@ export default async function TrashCanServicePage({ params }: TrashCanServicePag
                   <feature.icon aria-hidden="true" className="h-5 w-5 flex-none text-green-600" />
                   {feature.name}
                 </dt>
-                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
+                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-800">
                   <p className="flex-auto">{feature.description}</p>
                   <p className="mt-6">
                     <Link

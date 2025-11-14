@@ -117,8 +117,8 @@ export default async function PoopScoopPage({ params }: PoopScoopPageProps) {
           <h1 className="mt-2 text-4xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-5xl lg:text-balance">
             {headline}
           </h1>
-          <p className="mt-6 text-lg leading-8 text-gray-600">{intro}</p>
-          <p className="mt-4 text-base leading-7 text-gray-600">
+          <p className="mt-6 text-lg leading-8 text-gray-800">{intro}</p>
+          <p className="mt-4 text-base leading-7 text-gray-800">
             {description}
           </p>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
@@ -147,7 +147,7 @@ export default async function PoopScoopPage({ params }: PoopScoopPageProps) {
                   />
                   {feature.name}
                 </dt>
-                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
+                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-800">
                   <p className="flex-auto">{feature.description}</p>
                   <p className="mt-6">
                     <Link
