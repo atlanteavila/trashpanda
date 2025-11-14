@@ -20,6 +20,9 @@ import {
 } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 
+import dontForget from '@/app/images/images/dont-forget-trash-day.jpg'
+import dogPoopService from '@/app/images/images/dog-poop-service.jpg'
+
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Logo } from '@/components/Logo'
@@ -31,16 +34,17 @@ const navigation = {
       name: 'Services',
       featured: [
         {
-          name: 'Trash Bin Detailing',
+          name: 'Trash Can Take-Out & Return',
           href: '/#services',
-          imageSrc: 'https://placehold.co/600x600?text=Trash+Bin+Detailing',
-          imageAlt: 'Freshly sanitized trash bins lined up along a driveway.',
+          imageSrc: dontForget,
+          imageAlt: 'Never forget trash day again!',
         },
         {
           name: 'Pet Waste Scooping',
           href: '/#services',
-          imageSrc: 'https://placehold.co/600x600?text=Pet+Waste+Scooping',
-          imageAlt: 'Technician collecting pet waste from a neatly manicured lawn.',
+          imageSrc: dogPoopService,
+          imageAlt:
+            'Technician collecting pet waste from a neatly manicured lawn.',
         },
       ],
       sections: [
@@ -83,7 +87,8 @@ interface HeaderContentProps {
 export function HeaderContent({ user }: HeaderContentProps) {
   const [open, setOpen] = useState(false)
   const isAuthenticated = Boolean(user)
-  const firstName = user?.firstName?.trim() || user?.name?.split(' ')[0] || 'there'
+  const firstName =
+    user?.firstName?.trim() || user?.name?.split(' ')[0] || 'there'
 
   return (
     <header className="bg-white py-4">
@@ -115,7 +120,7 @@ export function HeaderContent({ user }: HeaderContentProps) {
                   {navigation.categories.map((category) => (
                     <Tab
                       key={category.name}
-                      className="flex-1 border-b-2 border-transparent px-1 py-4 text-base font-medium text-slate-900 whitespace-nowrap data-selected:border-emerald-600 data-selected:text-emerald-600"
+                      className="flex-1 border-b-2 border-transparent px-1 py-4 text-base font-medium whitespace-nowrap text-slate-900 data-selected:border-emerald-600 data-selected:text-emerald-600"
                     >
                       {category.name}
                     </Tab>
@@ -124,7 +129,10 @@ export function HeaderContent({ user }: HeaderContentProps) {
               </div>
               <TabPanels as={Fragment}>
                 {navigation.categories.map((category) => (
-                  <TabPanel key={category.name} className="space-y-10 px-4 pt-10 pb-8">
+                  <TabPanel
+                    key={category.name}
+                    className="space-y-10 px-4 pt-10 pb-8"
+                  >
                     <div className="grid grid-cols-2 gap-x-4">
                       {category.featured.map((item) => (
                         <div key={item.name} className="group relative text-sm">
@@ -141,7 +149,10 @@ export function HeaderContent({ user }: HeaderContentProps) {
                             onClick={() => setOpen(false)}
                             className="mt-6 block font-medium text-slate-900"
                           >
-                            <span aria-hidden="true" className="absolute inset-0 z-10" />
+                            <span
+                              aria-hidden="true"
+                              className="absolute inset-0 z-10"
+                            />
                             {item.name}
                           </Link>
                           <p aria-hidden="true" className="mt-1 text-slate-600">
@@ -152,7 +163,10 @@ export function HeaderContent({ user }: HeaderContentProps) {
                     </div>
                     {category.sections.map((section) => (
                       <div key={section.name}>
-                        <p id={`${category.id}-${section.id}-heading-mobile`} className="font-medium text-slate-900">
+                        <p
+                          id={`${category.id}-${section.id}-heading-mobile`}
+                          className="font-medium text-slate-900"
+                        >
                           {section.name}
                         </p>
                         <ul
@@ -273,13 +287,19 @@ export function HeaderContent({ user }: HeaderContentProps) {
                     transition
                     className="absolute inset-x-0 top-full z-20 w-full bg-white text-sm text-slate-600 shadow-lg transition data-closed:opacity-0 data-enter:duration-200 data-enter:ease-out data-leave:duration-150 data-leave:ease-in"
                   >
-                    <div aria-hidden="true" className="absolute inset-0 top-1/2 bg-white shadow" />
+                    <div
+                      aria-hidden="true"
+                      className="absolute inset-0 top-1/2 bg-white shadow"
+                    />
                     <div className="relative">
                       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
                         <div className="grid grid-cols-2 gap-x-8 gap-y-10">
                           <div className="col-start-2 grid grid-cols-1 gap-8 sm:grid-cols-2">
                             {category.featured.map((item) => (
-                              <div key={item.name} className="group relative text-base">
+                              <div
+                                key={item.name}
+                                className="group relative text-base"
+                              >
                                 <Image
                                   alt={item.imageAlt}
                                   src={item.imageSrc}
@@ -288,8 +308,14 @@ export function HeaderContent({ user }: HeaderContentProps) {
                                   unoptimized
                                   className="aspect-square w-full rounded-lg bg-slate-100 object-cover transition group-hover:opacity-80"
                                 />
-                                <Link href={item.href} className="mt-6 block font-medium text-slate-900">
-                                  <span aria-hidden="true" className="absolute inset-0 z-10" />
+                                <Link
+                                  href={item.href}
+                                  className="mt-6 block font-medium text-slate-900"
+                                >
+                                  <span
+                                    aria-hidden="true"
+                                    className="absolute inset-0 z-10"
+                                  />
                                   {item.name}
                                 </Link>
                                 <p aria-hidden="true" className="mt-1">
@@ -301,7 +327,10 @@ export function HeaderContent({ user }: HeaderContentProps) {
                           <div className="row-start-1 grid grid-cols-2 gap-x-8 gap-y-10 text-sm">
                             {category.sections.map((section) => (
                               <div key={section.name}>
-                                <p id={`${section.id}-heading`} className="font-medium text-slate-900">
+                                <p
+                                  id={`${section.id}-heading`}
+                                  className="font-medium text-slate-900"
+                                >
                                   {section.name}
                                 </p>
                                 <ul
@@ -311,7 +340,10 @@ export function HeaderContent({ user }: HeaderContentProps) {
                                 >
                                   {section.items.map((item) => (
                                     <li key={item.name} className="flex">
-                                      <Link href={item.href} className="hover:text-slate-900">
+                                      <Link
+                                        href={item.href}
+                                        className="hover:text-slate-900"
+                                      >
                                         {item.name}
                                       </Link>
                                     </li>
@@ -351,7 +383,10 @@ export function HeaderContent({ user }: HeaderContentProps) {
             ) : (
               <>
                 <div className="hidden lg:block">
-                  <Link href="/login" className="text-sm font-medium text-slate-700 hover:text-slate-900">
+                  <Link
+                    href="/login"
+                    className="text-sm font-medium text-slate-700 hover:text-slate-900"
+                  >
                     Sign in
                   </Link>
                 </div>
