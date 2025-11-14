@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import type { Session } from 'next-auth'
 import {
   Dialog,
@@ -26,6 +26,7 @@ import dogPoopService from '@/app/images/images/dog-poop-service.jpg'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Logo } from '@/components/Logo'
+import { usePathname, useSearchParams } from 'next/navigation'
 
 const navigation = {
   categories: [
@@ -35,13 +36,13 @@ const navigation = {
       featured: [
         {
           name: 'Trash Can Take-Out & Return',
-          href: '/#services',
+          href: '/services/pinehurst/trash-can-take-out',
           imageSrc: dontForget,
           imageAlt: 'Never forget trash day again!',
         },
         {
           name: 'Pet Waste Scooping',
-          href: '/#services',
+          href: '/services/pinehurst/poop-scoop',
           imageSrc: dogPoopService,
           imageAlt:
             'Technician collecting pet waste from a neatly manicured lawn.',
@@ -52,11 +53,18 @@ const navigation = {
           id: 'service-details',
           name: 'Services',
           items: [
-            { name: 'Residential Bin Cleaning', href: '/#services' },
-            { name: 'Commercial Bin Programs', href: '/#services' },
-            { name: 'Pet Waste Removal', href: '/#services' },
-            { name: 'One-Time Deep Clean', href: '/#services' },
-            { name: 'Recurring Schedules', href: '/#pricing' },
+            {
+              name: 'Residential Bin Cleaning',
+              href: '/services/pinehurst/trash-can-take-out',
+            },
+            {
+              name: 'Pet Waste Removal',
+              href: '/services/pinehurst/poop-scoop',
+            },
+            {
+              name: 'One-Time Deep Clean',
+              href: '/services/pinehurst/bin-cleaning',
+            },
           ],
         },
         {
@@ -74,7 +82,6 @@ const navigation = {
     },
   ],
   pages: [
-    { name: 'Testimonials', href: '/#testimonials' },
     { name: 'Pricing', href: '/#pricing' },
     { name: 'Contact', href: '/contact' },
   ],
@@ -89,9 +96,24 @@ export function HeaderContent({ user }: HeaderContentProps) {
   const isAuthenticated = Boolean(user)
   const firstName =
     user?.firstName?.trim() || user?.name?.split(' ')[0] || 'there'
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
+  const urlKey = `${pathname}?${searchParams.toString()}`
+
+  useEffect(() => {
+    const handleHashChange = () => setOpen(false)
+
+    // Close on hash changes
+    window.addEventListener('hashchange', handleHashChange)
+
+    // Close on path or search param changes
+    setOpen(false)
+
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [pathname, searchParams])
   return (
-    <header className="bg-white py-4">
+    <header key={pathname} className="bg-white py-4">
       <Dialog open={open} onClose={setOpen} className="relative z-50 lg:hidden">
         <DialogBackdrop
           transition
