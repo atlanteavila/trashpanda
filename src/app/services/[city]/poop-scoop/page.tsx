@@ -46,17 +46,16 @@ const getCityCopy = (city: string) => {
   return {
     formattedCity,
     headline: `${formattedCity} dog poop scooping you can set and forget`,
-    intro:
-      `Leave the dirty work to The Trash Panda. Our local team keeps ${formattedCity} yards spotless with dependable pet waste removal built for busy households.`,
-    description:
-      `Every visit includes a full sweep of your lawn, deodorizing treatments on request, and eco-friendly waste disposal so your outdoor space stays safe for kids and pets.`,
+    intro: `Leave the dirty work to The Trash Panda. Our local team keeps ${formattedCity} yards spotless with dependable pet waste removal built for busy households.`,
+    description: `Every visit includes a full sweep of your lawn, deodorizing treatments on request, and eco-friendly waste disposal so your outdoor space stays safe for kids and pets.`,
   }
 }
 
 export const dynamicParams = true
 
-export function generateMetadata({ params }: PoopScoopPageProps): Metadata {
-  const { formattedCity } = getCityCopy(params.city)
+export async function generateMetadata({ params }: PoopScoopPageProps) {
+  const { city } = await params
+  const { formattedCity } = getCityCopy(city)
   const title = `${formattedCity} ${serviceName} | The Trash Panda`
   const description = `Professional ${serviceName.toLowerCase()} in ${formattedCity}. Book flexible schedules, add-on deodorizing, and enjoy a pristine yard without lifting a finger.`
 
@@ -70,12 +69,12 @@ export function generateMetadata({ params }: PoopScoopPageProps): Metadata {
       'The Trash Panda',
     ],
     alternates: {
-      canonical: `/services/${params.city}/poop-scoop`,
+      canonical: `/services/${city}/poop-scoop`,
     },
     openGraph: {
       title,
       description,
-      url: `/services/${params.city}/poop-scoop`,
+      url: `/services/${city}/poop-scoop`,
       type: 'website',
     },
     twitter: {
@@ -86,8 +85,9 @@ export function generateMetadata({ params }: PoopScoopPageProps): Metadata {
   }
 }
 
-export default function PoopScoopPage({ params }: PoopScoopPageProps) {
-  const { formattedCity, headline, intro, description } = getCityCopy(params.city)
+export default async function PoopScoopPage({ params }: PoopScoopPageProps) {
+  const { city } = await params
+  const { formattedCity, headline, intro, description } = getCityCopy(city)
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -111,14 +111,16 @@ export default function PoopScoopPage({ params }: PoopScoopPageProps) {
     <div className="bg-white py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-green-600">
+          <p className="text-sm font-semibold tracking-wide text-green-600 uppercase">
             {formattedCity} • Pet waste removal experts
           </p>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-5xl lg:text-balance">
             {headline}
           </h1>
           <p className="mt-6 text-lg leading-8 text-gray-600">{intro}</p>
-          <p className="mt-4 text-base leading-7 text-gray-600">{description}</p>
+          <p className="mt-4 text-base leading-7 text-gray-600">
+            {description}
+          </p>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
             <Link
               href="/contact"
@@ -127,10 +129,10 @@ export default function PoopScoopPage({ params }: PoopScoopPageProps) {
               Book a cleaning
             </Link>
             <Link
-              href="tel:+17206072472"
+              href="tel:+19253308798"
               className="inline-flex items-center justify-center rounded-md border border-green-100 px-5 py-3 text-base font-semibold text-green-600 transition hover:border-green-200 hover:text-green-500"
             >
-              Call (720) 607-2472
+              Call (925) 330-8798
             </Link>
           </div>
         </div>
@@ -138,8 +140,11 @@ export default function PoopScoopPage({ params }: PoopScoopPageProps) {
           <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
             {featureHighlights.map((feature) => (
               <div key={feature.name} className="flex flex-col">
-                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-gray-900">
-                  <feature.icon aria-hidden="true" className="h-5 w-5 flex-none text-green-600" />
+                <dt className="flex items-center gap-x-3 text-base leading-7 font-semibold text-gray-900">
+                  <feature.icon
+                    aria-hidden="true"
+                    className="h-5 w-5 flex-none text-green-600"
+                  />
                   {feature.name}
                 </dt>
                 <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
@@ -147,7 +152,7 @@ export default function PoopScoopPage({ params }: PoopScoopPageProps) {
                   <p className="mt-6">
                     <Link
                       href="/contact"
-                      className="text-sm font-semibold leading-6 text-green-600 transition hover:text-green-500"
+                      className="text-sm leading-6 font-semibold text-green-600 transition hover:text-green-500"
                     >
                       Request a custom plan <span aria-hidden="true">→</span>
                     </Link>
@@ -162,14 +167,17 @@ export default function PoopScoopPage({ params }: PoopScoopPageProps) {
             Why {formattedCity} pet owners trust The Trash Panda
           </h2>
           <p className="mt-6 text-base leading-7">
-            From apartment pet relief areas to sprawling backyards, we tailor our scooping routes to every property size.
-            Optional deodorizing and lawn refresh add-ons keep your outdoor hangouts smelling as clean as they look, and
-            transparent pricing means no surprises on your invoice.
+            From apartment pet relief areas to sprawling backyards, we tailor
+            our scooping routes to every property size. Optional deodorizing and
+            lawn refresh add-ons keep your outdoor hangouts smelling as clean as
+            they look, and transparent pricing means no surprises on your
+            invoice.
           </p>
           <p className="mt-4 text-base leading-7">
-            Need a one-time cleanup before a party or listing photos? We can do that too. Add your preferred schedule and
-            any special access notes during booking, and our uniformed pros will handle the rest while you get back to
-            enjoying life outside.
+            Need a one-time cleanup before a party or listing photos? We can do
+            that too. Add your preferred schedule and any special access notes
+            during booking, and our uniformed pros will handle the rest while
+            you get back to enjoying life outside.
           </p>
         </div>
         <div className="mx-auto mt-24 max-w-3xl rounded-3xl border border-green-100 bg-green-50 p-10 text-center">
@@ -177,8 +185,8 @@ export default function PoopScoopPage({ params }: PoopScoopPageProps) {
             Ready for a fresher yard in {formattedCity}?
           </h2>
           <p className="mt-4 text-base leading-7 text-gray-700">
-            Tell us about your pets, lawn size, and preferred visit frequency. We’ll send over a personalized quote within
-            one business day.
+            Tell us about your pets, lawn size, and preferred visit frequency.
+            We’ll send over a personalized quote within one business day.
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link

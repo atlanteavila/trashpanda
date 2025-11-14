@@ -14,7 +14,7 @@ const services = [
     name: 'Trash Can Take-Out & Return',
     description:
       'Set it and forget it. We roll cans out before pickup and tuck them back once collected—no more sprinting in slippers.',
-    href: '/services/denver/trash-can-take-out',
+    href: '/services/pinehurst/trash-can-take-out',
     image: CanServices,
     imageAlt: 'Trash cans lined up for curbside pickup in a residential neighborhood.',
   },
@@ -23,7 +23,7 @@ const services = [
     name: 'Bin Cleaning & Deodorizing',
     description:
       'High-pressure, eco-friendly cleaning keeps your cans smelling fresh and eliminates grime, bacteria, and stubborn residue.',
-    href: '/services/denver/bin-cleaning',
+    href: '/services/pinehurst/bin-cleaning',
     image: CleanBins,
     imageAlt: 'Technician washing a trash bin with high-pressure equipment.',
   },
@@ -32,24 +32,15 @@ const services = [
     name: 'Poop Scoop Service',
     description:
       'Weekly or twice-weekly scooping keeps your yard spotless. Add deodorizing for outdoor hangs that smell as clean as they look.',
-    href: '/services/denver/poop-scoop',
+    href: '/services/pinehurst/poop-scoop',
     image: PoopScoop,
     imageAlt: 'Service professional removing pet waste from a backyard lawn.',
-  },
-  {
-    label: 'Bundle & Save',
-    name: 'Home Care Plans',
-    description:
-      'Combine can concierge, bin washes, and yard refresh add-ons to tailor the perfect plan for your home and budget.',
-    href: '/services/denver/bundles',
-    image: BundledServices,
-    imageAlt: 'Illustrated dashboard showcasing bundled service options from The Trash Panda.',
   },
 ]
 
 export function HomeServicesShowcase() {
   return (
-    <section className="relative overflow-hidden bg-[#005413] pt-20 pb-28 sm:py-32">
+    <section id="services" className="relative overflow-hidden bg-[#005413] pt-20 pb-28 sm:py-32">
       <Image
         className="absolute top-1/2 left-1/2 max-w-none translate-x-[-44%] translate-y-[-42%]"
         src={backgroundImage}
@@ -68,13 +59,13 @@ export function HomeServicesShowcase() {
             to explore.
           </p>
         </div>
-        <div className="mt-20 grid gap-12 sm:mt-24 md:grid-cols-2">
+        <div className="mt-20 grid gap-5 sm:mt-24 md:grid-cols-3">
           {services.map((service) => (
             <article
               key={service.name}
-              className="relative flex flex-col overflow-hidden rounded-[2.25rem] bg-white/95 px-8 pb-10 pt-12 ring-1 ring-white/20"
+              className="relative flex flex-col overflow-hidden rounded-[0.25rem] bg-white px-8 pb-10 pt-12"
             >
-              <div className="relative -mx-8 -mt-20 mb-8 overflow-hidden rounded-[1.75rem]">
+              <div className="relative -mx-8 -mt-20 mb-8 overflow-hidden ">
                 <div className="relative aspect-[4/3]">
                   <Image
                     src={service.image}
@@ -87,7 +78,7 @@ export function HomeServicesShowcase() {
                 </div>
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-32 bg-white [transform:skewY(-45deg)] origin-bottom-left"
+                  className="pointer-events-none absolute inset-x-0 bottom-[-88px] h-22 bg-white [transform:skewY(-5deg)] origin-bottom-left"
                 />
               </div>
               <p className="text-xs font-semibold uppercase tracking-wide text-green-700">{service.label}</p>
