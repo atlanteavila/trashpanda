@@ -30,9 +30,9 @@ const featureHighlights = [
 ]
 
 type PoopScoopPageProps = {
-  params: {
+  params: Promise<{
     city: string
-  }
+  }>
 }
 
 const toTitleCase = (value: string) =>
