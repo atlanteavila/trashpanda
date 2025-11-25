@@ -123,7 +123,7 @@ export default async function PoopScoopPage({ params }: PoopScoopPageProps) {
           </p>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
             <Link
-              href="/contact"
+              href="/register"
               className="inline-flex items-center justify-center rounded-md bg-green-600 px-5 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-green-500"
             >
               Book a cleaning

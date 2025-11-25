@@ -122,7 +122,7 @@ export default async function BinCleaningPage({ params }: BinCleaningPageProps) 
           <p className="mt-4 text-base leading-7 text-gray-800">{description}</p>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
             <Link
-              href="/contact"
+              href="/register"
               className="inline-flex items-center justify-center rounded-md bg-green-600 px-5 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-green-500"
             >
               Schedule a cleaning

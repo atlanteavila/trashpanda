@@ -16,8 +16,8 @@ export default function Home() {
       <main className="bg-white dark:bg-white">
         <Hero />
         <HomeServicesShowcase />
-        <CallToAction />
         <Testimonials />
+        <CallToAction />
         <Pricing />
         <Faqs />
       </main>
