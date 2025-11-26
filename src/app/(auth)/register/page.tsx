@@ -85,7 +85,7 @@ export default async function Register({
           type="tel"
           inputMode="tel"
           autoComplete="tel"
-          placeholder="Optional"
+          required
         />
         <TextField
           className="col-span-full"
