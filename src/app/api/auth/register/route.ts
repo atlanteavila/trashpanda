@@ -27,6 +27,7 @@ export async function POST(request: Request) {
   const lastName = getStringValue(formData.get('last_name'))
   const email = getStringValue(formData.get('email'))?.toLowerCase()
   const password = getStringValue(formData.get('password'))
+  const phone = getStringValue(formData.get('phone'))
   const referralSource = getStringValue(formData.get('referral_source'))
   const street = getStringValue(formData.get('street'))
   const city = getStringValue(formData.get('city'))
@@ -92,6 +93,7 @@ export async function POST(request: Request) {
         firstName,
         lastName,
         name: `${firstName} ${lastName}`.trim(),
+        phone,
         hashedPassword,
         referralSource,
         addresses: {

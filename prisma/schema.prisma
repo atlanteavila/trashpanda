@@ -15,6 +15,7 @@ model User {
   firstName      String
   lastName       String
   name           String?
+  phone          String?
   referralSource String?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt

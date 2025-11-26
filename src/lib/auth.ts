@@ -48,6 +48,7 @@ const credentials = Credentials({
       name: user.name ?? `${user.firstName} ${user.lastName}`.trim(),
       firstName: user.firstName,
       lastName: user.lastName,
+      phone: user.phone ?? null,
     }
   },
 })
@@ -69,6 +70,7 @@ export const authOptions: NextAuthConfig = {
         token.firstName = (user as unknown as { firstName?: string }).firstName
         token.lastName = (user as unknown as { lastName?: string }).lastName
         token.email = user.email
+        token.phone = (user as unknown as { phone?: string | null }).phone ?? null
       }
 
       return token
@@ -80,6 +82,9 @@ export const authOptions: NextAuthConfig = {
         session.user.lastName = token.lastName as string
         if (token.email && !session.user.email) {
           session.user.email = token.email as string
+        }
+        if ('phone' in token) {
+          session.user.phone = (token.phone as string | null | undefined) ?? null
         }
       }
 

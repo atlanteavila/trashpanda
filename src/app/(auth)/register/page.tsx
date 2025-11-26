@@ -80,6 +80,15 @@ export default async function Register({
         />
         <TextField
           className="col-span-full"
+          label="Phone number"
+          name="phone"
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          required
+        />
+        <TextField
+          className="col-span-full"
           label="Password"
           name="password"
           type="password"
