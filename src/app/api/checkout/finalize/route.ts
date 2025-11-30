@@ -4,6 +4,11 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { requireCheckoutSessionDelegate, requireSubscriptionDelegate } from '@/lib/prisma'
 import { retrieveStripeCheckoutSession } from '@/lib/stripe'
+import {
+  sendSubscriptionConfirmationEmail,
+  type SubscriptionServiceLine,
+} from '@/lib/subscriptionEmails'
+import { getSiteUrl } from '@/lib/email'
 
 const SERVICE_DAY_VALUES = [
   'MONDAY',
@@ -188,7 +193,9 @@ export async function POST(request: Request) {
 
   try {
     const subscriptions = requireSubscriptionDelegate()
-    const services = Array.isArray(checkoutRecord.services) ? checkoutRecord.services : []
+    const services: SubscriptionServiceLine[] = Array.isArray(checkoutRecord.services)
+      ? (checkoutRecord.services as SubscriptionServiceLine[])
+      : []
     const normalizedServiceDay =
       normalizeServiceDay(checkoutRecord.preferredServiceDay) ??
       normalizeServiceDay(stripeSession?.metadata?.preferredServiceDay) ??
@@ -219,21 +226,57 @@ export async function POST(request: Request) {
       stripePaymentStatus,
     }
 
+    let subscriptionRecord:
+      | Awaited<ReturnType<typeof subscriptions.create>>
+      | Awaited<ReturnType<typeof subscriptions.update>>
+      | null = null
+
     if (stripeSubscriptionId) {
       const existing = await subscriptions.findFirst({
         where: { stripeSubscriptionId },
       })
 
       if (existing) {
-        await subscriptions.update({
+        subscriptionRecord = await subscriptions.update({
           where: { id: existing.id },
           data: subscriptionPayload,
         })
       } else {
-        await subscriptions.create({ data: subscriptionPayload })
+        subscriptionRecord = await subscriptions.create({ data: subscriptionPayload })
       }
     } else {
-      await subscriptions.create({ data: subscriptionPayload })
+      subscriptionRecord = await subscriptions.create({ data: subscriptionPayload })
+    }
+
+    if (subscriptionRecord && session.user.email) {
+      const serviceList: SubscriptionServiceLine[] = Array.isArray(subscriptionRecord.services)
+        ? (subscriptionRecord.services as SubscriptionServiceLine[])
+        : services
+
+      try {
+        await sendSubscriptionConfirmationEmail({
+          to: session.user.email,
+          firstName: session.user.firstName ?? session.user.name ?? undefined,
+          lastName: session.user.lastName ?? undefined,
+          services: serviceList,
+          address: {
+            label: subscriptionRecord.addressLabel ?? undefined,
+            street: subscriptionRecord.addressStreet,
+            city: subscriptionRecord.addressCity,
+            state: subscriptionRecord.addressState,
+            postalCode: subscriptionRecord.addressPostalCode,
+          },
+          serviceDay: subscriptionRecord.preferredServiceDay,
+          planName: subscriptionRecord.planName,
+          monthlyTotal: subscriptionRecord.monthlyTotal,
+          accessNotes: subscriptionRecord.accessNotes,
+          manageUrl: `${getSiteUrl()}/dash/manage`,
+          supportEmail: process.env.CONTACT_RECIPIENT ?? undefined,
+          supportPhone: process.env.CONTACT_PHONE ?? undefined,
+        })
+      } catch (error) {
+        console.error('Failed to send subscription confirmation email', error)
+      }
     }
   } catch (error) {
     console.error('Failed to sync subscription data after checkout completion', error)
