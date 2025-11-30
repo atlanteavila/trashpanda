@@ -272,6 +272,7 @@ export async function POST(request: Request) {
           accessNotes: subscriptionRecord.accessNotes,
           manageUrl: `${getSiteUrl()}/dash/manage`,
           supportEmail: process.env.CONTACT_RECIPIENT ?? undefined,
+          supportPhone: process.env.CONTACT_PHONE ?? undefined,
         })
       } catch (error) {
         console.error('Failed to send subscription confirmation email', error)

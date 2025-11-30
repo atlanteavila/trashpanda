@@ -91,6 +91,7 @@ export async function POST(request: Request) {
       accessNotes: 'Gate code is 1234; bins are on the right side of the garage.',
       manageUrl: `${siteUrl}/dash/manage`,
       supportEmail: process.env.CONTACT_RECIPIENT ?? undefined,
+      supportPhone: process.env.CONTACT_PHONE ?? undefined,
     })
 
     return NextResponse.json({ success: true, messageId: result.messageId })

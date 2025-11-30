@@ -2,19 +2,6 @@ import type { SentMessageInfo } from 'nodemailer'
 
 import { brandColors, getEmailTransporter, getFromAddress, getSiteUrl } from './email'
 
-const logoSvg = `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="64" height="64" rx="16" fill="#ECFDF3"/>
-  <circle cx="32" cy="32" r="22" fill="#16A34A"/>
-  <path d="M24 28c0-3.866 3.582-7 8-7s8 3.134 8 7c0 4.5-8 12-8 12s-8-7.5-8-12Z" fill="#BBF7D0"/>
-  <path d="M28 26.5c0-2.485 1.79-4.5 4-4.5s4 2.015 4 4.5c0 2.9-4 7.5-4 7.5s-4-4.6-4-7.5Z" fill="#F8F8F8"/>
-  <circle cx="28.5" cy="26" r="1.5" fill="#0F172A"/>
-  <circle cx="35.5" cy="26" r="1.5" fill="#0F172A"/>
-  <path d="M30.5 31c.8 1 2.2 1 3 0" stroke="#0F172A" stroke-width="1.5" stroke-linecap="round"/>
-  <path d="M20 41c3 2.5 7.5 4 12 4s9-1.5 12-4" stroke="#0F172A" stroke-width="2" stroke-linecap="round"/>
-</svg>`
-
-const logoDataUri = `data:image/svg+xml;utf8,${encodeURIComponent(logoSvg)}`
-
 export type SubscriptionServiceLine = {
   id?: string
   name?: string
@@ -44,6 +31,7 @@ type SubscriptionEmailPayload = {
   accessNotes?: string | null
   manageUrl?: string
   supportEmail?: string
+  supportPhone?: string
 }
 
 function escapeHtml(value: string): string {
@@ -127,7 +115,9 @@ function buildSubscriptionEmailHtml(payload: SubscriptionEmailPayload): string {
   const userName = payload.firstName?.trim() || payload.lastName?.trim() || 'Trash Panda friend'
   const manageUrl = payload.manageUrl || `${siteUrl}/dash/manage`
   const supportEmail = payload.supportEmail || 'support@thetrashpanda.net'
-  const logoUrl = logoDataUri
+  const supportPhone = payload.supportPhone || process.env.CONTACT_PHONE?.trim()
+  const logoUrl = `${siteUrl}/email-logo.svg`
+  const supportPhoneHref = supportPhone ? supportPhone.replace(/[^+\d]/g, '') || supportPhone : null
   const planName = payload.planName?.trim()
   const monthlyTotal = formatCurrency(payload.monthlyTotal ?? 0)
   const addressLabel = payload.address.label?.trim() ?? 'Service address'
@@ -234,7 +224,7 @@ function buildSubscriptionEmailHtml(payload: SubscriptionEmailPayload): string {
               <tr>
                 <td style="padding: 8px 32px 32px 32px;">
                   <p style="margin: 0; font-size: 14px; color:#475569; line-height: 22px;">
-                    If anything looks off, reply to this email or reach us at <a href="mailto:${supportEmail}" style="color:${brandColors.primary}; text-decoration: none; font-weight: 600;">${supportEmail}</a>. We are here to help keep pickup day effortless.
+                    If anything looks off, reply to this email, call us${supportPhone ? ` at <a href="tel:${supportPhoneHref}" style="color:${brandColors.primary}; text-decoration: none; font-weight: 600;">${escapeHtml(supportPhone)}</a>` : ''}, or reach us at <a href="mailto:${supportEmail}" style="color:${brandColors.primary}; text-decoration: none; font-weight: 600;">${supportEmail}</a>. We are here to help keep pickup day effortless.
                   </p>
                   <p style="margin: 12px 0 0 0; font-size: 14px; color:#475569;">See you soon!<br />The Trash Panda team</p>
                 </td>
@@ -259,6 +249,7 @@ function buildSubscriptionEmailText(payload: SubscriptionEmailPayload): string {
   const planName = payload.planName?.trim()
   const manageUrl = payload.manageUrl || `${siteUrl}/dash/manage`
   const supportEmail = payload.supportEmail || 'support@thetrashpanda.net'
+  const supportPhone = payload.supportPhone || process.env.CONTACT_PHONE?.trim()
   const name = payload.firstName?.trim() || payload.lastName?.trim() || 'there'
   const addressLabel = payload.address.label?.trim() ?? 'Service address'
   const addressLines = `${payload.address.street}, ${payload.address.city}, ${payload.address.state} ${payload.address.postalCode}`
@@ -281,7 +272,7 @@ ${addressLabel}: ${addressLines}
 ${accessNotesText}
 
 Manage your subscription: ${manageUrl}
-Questions? Email ${supportEmail}.
+Questions? Email ${supportEmail}${supportPhone ? ` or call ${supportPhone}` : ''}.
 
 See you soon,
 The Trash Panda team`
