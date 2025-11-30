@@ -1,6 +1,12 @@
 import type { SentMessageInfo } from 'nodemailer'
 
-import { brandColors, getEmailTransporter, getFromAddress, getSiteUrl } from './email'
+import {
+  brandColors,
+  getEmailAssetBaseUrl,
+  getEmailTransporter,
+  getFromAddress,
+  getSiteUrl,
+} from './email'
 
 export type SubscriptionServiceLine = {
   id?: string
@@ -116,7 +122,7 @@ function buildSubscriptionEmailHtml(payload: SubscriptionEmailPayload): string {
   const manageUrl = payload.manageUrl || `${siteUrl}/dash/manage`
   const supportEmail = payload.supportEmail || 'support@thetrashpanda.net'
   const supportPhone = payload.supportPhone || process.env.CONTACT_PHONE?.trim()
-  const logoUrl = `${siteUrl}/email-logo.svg`
+  const logoUrl = `${getEmailAssetBaseUrl()}/email-logo.svg`
   const supportPhoneHref = supportPhone ? supportPhone.replace(/[^+\d]/g, '') || supportPhone : null
   const planName = payload.planName?.trim()
   const monthlyTotal = formatCurrency(payload.monthlyTotal ?? 0)

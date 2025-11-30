@@ -36,6 +36,18 @@ export function getSiteUrl(): string {
   return baseUrl.replace(/\/$/, '')
 }
 
+export function getEmailAssetBaseUrl(): string {
+  const rawBase =
+    process.env.EMAIL_ASSET_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://thetrashpanda.net'
+  const normalized = rawBase.replace(/\/$/, '')
+
+  if (/localhost|127\.0\.0\.1/i.test(normalized)) {
+    return 'https://thetrashpanda.net'
+  }
+
+  return normalized
+}
+
 export const brandColors = {
   primary: '#16a34a',
   dark: '#0f2f24',
