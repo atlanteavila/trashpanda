@@ -122,7 +122,7 @@ function buildSubscriptionEmailHtml(payload: SubscriptionEmailPayload): string {
   const manageUrl = payload.manageUrl || `${siteUrl}/dash/manage`
   const supportEmail = payload.supportEmail || 'support@thetrashpanda.net'
   const supportPhone = payload.supportPhone || process.env.CONTACT_PHONE?.trim()
-  const logoUrl = `${getEmailAssetBaseUrl()}/email-logo.svg`
+  const logoUrl = `https://catholic-web-hosting.nyc3.cdn.digitaloceanspaces.com/trash-panda-logo.png`
   const supportPhoneHref = supportPhone ? supportPhone.replace(/[^+\d]/g, '') || supportPhone : null
   const planName = payload.planName?.trim()
   const monthlyTotal = formatCurrency(payload.monthlyTotal ?? 0)
