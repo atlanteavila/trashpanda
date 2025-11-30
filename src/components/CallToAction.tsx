@@ -24,7 +24,7 @@ export function CallToAction() {
             Get started today
           </h2>
           <p className="mt-4 text-lg tracking-tight text-white">
-            Let us help you with those pesky minial tasks. We're here to help! Sign up today!
+            Let us help you with those pesky minial tasks. We are here to help! Sign up today!
           </p>
           <Button href="/register" color="white" className="mt-10">
             Get started today!
