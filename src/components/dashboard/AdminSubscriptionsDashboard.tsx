@@ -179,6 +179,7 @@ export function AdminSubscriptionsDashboard({
               <DashboardShell
                 key={selectedRecord.subscription.id}
                 mode="edit"
+                embedded
                 user={{
                   id: selectedRecord.user.id,
                   email: selectedRecord.user.email,
