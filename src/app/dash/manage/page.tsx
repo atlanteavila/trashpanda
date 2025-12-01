@@ -4,73 +4,10 @@ import type { Metadata } from 'next'
 import { DashboardShell, type SubscriptionSnapshot, type DashboardAddress } from '@/components/dashboard/DashboardShell'
 import { auth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import type { Prisma } from '@prisma/client'
+import { mapSubscriptionToSnapshot, normalizeDashboardAddresses } from '@/lib/subscriptionSnapshot'
 
 export const metadata: Metadata = {
   title: 'Manage subscriptions',
-}
-
-function mapAddresses(addresses: DashboardAddress[]): DashboardAddress[] {
-  return addresses.map((address, index) => ({
-    ...address,
-    label: address.label?.trim() ?? (index === 0 ? 'Home' : `Location ${index + 1}`),
-  }))
-}
-
-const VALID_SERVICE_IDS = new Set<SubscriptionSnapshot['services'][number]['id']>([
-  'trash',
-  'bin-wash',
-  'poop-scoop',
-  'porch-blow',
-  'yard-rake',
-])
-
-function parseSubscriptionServices(
-  value: Prisma.JsonValue | null,
-): SubscriptionSnapshot['services'] {
-  if (!Array.isArray(value)) {
-    return []
-  }
-
-  const services: SubscriptionSnapshot['services'] = []
-
-  for (const item of value) {
-    if (!item || typeof item !== 'object' || Array.isArray(item)) {
-      continue
-    }
-
-    const record = item as Record<string, unknown>
-    const { id, name, frequency, monthlyRate, quantity, notes } = record
-
-    if (
-      typeof id !== 'string' ||
-      !VALID_SERVICE_IDS.has(id as SubscriptionSnapshot['services'][number]['id']) ||
-      typeof name !== 'string' ||
-      typeof frequency !== 'string' ||
-      typeof monthlyRate !== 'number' ||
-      !Number.isFinite(monthlyRate) ||
-      typeof quantity !== 'number' ||
-      !Number.isFinite(quantity)
-    ) {
-      continue
-    }
-
-    services.push({
-      id: id as SubscriptionSnapshot['services'][number]['id'],
-      name,
-      frequency,
-      monthlyRate,
-      quantity,
-      notes:
-        typeof notes === 'string'
-          ? notes
-          : notes === null
-            ? null
-            : undefined,
-    })
-  }
-
-  return services
 }
 
 export default async function ManageSubscriptionsPage() {
@@ -103,7 +40,7 @@ export default async function ManageSubscriptionsPage() {
     }),
   ])
 
-  const addresses: DashboardAddress[] = mapAddresses(
+  const addresses: DashboardAddress[] = normalizeDashboardAddresses(
     (userRecord?.addresses ?? []).map((address) => ({
       id: address.id,
       label: address.label,
@@ -114,25 +51,9 @@ export default async function ManageSubscriptionsPage() {
     })),
   )
 
-  const subscriptions: SubscriptionSnapshot[] = subscriptionRecords.map((subscription) => ({
-    id: subscription.id,
-    planId: subscription.planId,
-    planName: subscription.planName,
-    addressId: subscription.addressId,
-    addressLabel: subscription.addressLabel,
-    street: subscription.addressStreet,
-    city: subscription.addressCity,
-    state: subscription.addressState,
-    postalCode: subscription.addressPostalCode,
-    serviceDay: subscription.preferredServiceDay ?? null,
-    services: parseSubscriptionServices(subscription.services),
-    monthlyTotal: subscription.monthlyTotal,
-    accessNotes: subscription.accessNotes ?? null,
-    status: subscription.status,
-    stripeStatus: subscription.stripeStatus,
-    stripePaymentStatus: subscription.stripePaymentStatus,
-    stripeSubscriptionId: subscription.stripeSubscriptionId,
-  }))
+  const subscriptions: SubscriptionSnapshot[] = subscriptionRecords.map(
+    (subscription) => mapSubscriptionToSnapshot(subscription),
+  )
 
   return (
     <DashboardShell

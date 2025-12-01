@@ -40,6 +40,12 @@ type SubscriptionEmailPayload = {
   supportPhone?: string
 }
 
+type SubscriptionEmailContentOptions = {
+  subject: string
+  statusLabel?: string
+  introLine?: string
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -114,11 +120,18 @@ function buildServicesText(services: Array<Required<SubscriptionServiceLine>>): 
     .join('\n')
 }
 
-function buildSubscriptionEmailHtml(payload: SubscriptionEmailPayload): string {
+function buildSubscriptionEmailHtml(
+  payload: SubscriptionEmailPayload,
+  options: SubscriptionEmailContentOptions,
+): string {
   const siteUrl = getSiteUrl()
   const services = normalizeServices(payload.services)
   const serviceDay = normalizeServiceDay(payload.serviceDay)
   const userName = payload.firstName?.trim() || payload.lastName?.trim() || 'Trash Panda friend'
+  const statusLabel = options.statusLabel || 'Subscription confirmed'
+  const introLine =
+    options.introLine ||
+    'Thanks for choosing The Trash Panda. Your subscription is set! Here are the details we have on file.'
   const manageUrl = payload.manageUrl || `${siteUrl}/dash/manage`
   const supportEmail = payload.supportEmail || 'support@thetrashpanda.net'
   const supportPhone = payload.supportPhone || process.env.CONTACT_PHONE?.trim()
@@ -136,7 +149,7 @@ function buildSubscriptionEmailHtml(payload: SubscriptionEmailPayload): string {
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Your Trash Panda subscription is confirmed</title>
+      <title>${escapeHtml(options.subject)}</title>
     </head>
     <body style="margin:0; padding:0; background:${brandColors.light}; font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:${brandColors.slate};">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${brandColors.light}; padding: 24px 0;">
@@ -151,7 +164,7 @@ function buildSubscriptionEmailHtml(payload: SubscriptionEmailPayload): string {
                         <img src="${logoUrl}" alt="The Trash Panda" width="56" height="56" style="display:block; border-radius: 14px; background:#ffffff; padding: 4px;" />
                       </td>
                       <td align="left" style="padding-left: 12px; color:#ecfdf3;">
-                        <div style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9;">Subscription confirmed</div>
+                        <div style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9;">${escapeHtml(statusLabel)}</div>
                         <div style="font-size: 26px; font-weight: 800; margin-top: 6px;">Welcome to The Trash Panda!</div>
                       </td>
                     </tr>
@@ -162,7 +175,7 @@ function buildSubscriptionEmailHtml(payload: SubscriptionEmailPayload): string {
                 <td style="padding: 28px 32px 12px 32px;">
                   <h1 style="margin:0; font-size: 22px; font-weight: 800; color:${brandColors.slate};">Hi ${escapeHtml(userName)},</h1>
                   <p style="margin:12px 0 0 0; font-size: 15px; line-height: 24px; color:#0f172a;">
-                    Thanks for choosing The Trash Panda. Your ${planName ? `${escapeHtml(planName)} plan ` : ''}subscription is set! Here are the details we have on file.
+                    ${escapeHtml(introLine)}
                   </p>
                 </td>
               </tr>
@@ -248,7 +261,10 @@ function buildSubscriptionEmailHtml(payload: SubscriptionEmailPayload): string {
   </html>`
 }
 
-function buildSubscriptionEmailText(payload: SubscriptionEmailPayload): string {
+function buildSubscriptionEmailText(
+  payload: SubscriptionEmailPayload,
+  options: SubscriptionEmailContentOptions,
+): string {
   const siteUrl = getSiteUrl()
   const services = normalizeServices(payload.services)
   const serviceDay = normalizeServiceDay(payload.serviceDay)
@@ -265,9 +281,13 @@ function buildSubscriptionEmailText(payload: SubscriptionEmailPayload): string {
     ? `Access notes: ${payload.accessNotes}`
     : 'Add access notes anytime from your dashboard.'
 
+  const introLine =
+    options.introLine ||
+    `Thanks for choosing The Trash Panda!${planName ? ` Your ${planName} plan is set.` : ''}`
+
   return `Hi ${name},
 
-Thanks for choosing The Trash Panda!${planName ? ` Your ${planName} plan is set.` : ''}
+${introLine}
 
 Services:
 ${serviceText}
@@ -284,12 +304,34 @@ See you soon,
 The Trash Panda team`
 }
 
-export function buildSubscriptionConfirmationEmail(payload: SubscriptionEmailPayload) {
+function buildSubscriptionEmail(
+  payload: SubscriptionEmailPayload,
+  options: SubscriptionEmailContentOptions,
+) {
   return {
-    subject: 'Your Trash Panda subscription is confirmed',
-    html: buildSubscriptionEmailHtml(payload),
-    text: buildSubscriptionEmailText(payload),
+    subject: options.subject,
+    html: buildSubscriptionEmailHtml(payload, options),
+    text: buildSubscriptionEmailText(payload, options),
   }
+}
+
+export function buildSubscriptionConfirmationEmail(payload: SubscriptionEmailPayload) {
+  return buildSubscriptionEmail(payload, {
+    subject: 'Your Trash Panda subscription is confirmed',
+    statusLabel: 'Subscription confirmed',
+    introLine: `Thanks for choosing The Trash Panda.${
+      payload.planName ? ` Your ${payload.planName} plan is set.` : ''
+    } Here are the details we have on file.`,
+  })
+}
+
+export function buildSubscriptionUpdateEmail(payload: SubscriptionEmailPayload) {
+  return buildSubscriptionEmail(payload, {
+    subject: 'Your Trash Panda subscription was updated',
+    statusLabel: 'Subscription updated',
+    introLine:
+      'We updated your subscription with the latest details below. Please review and reach out if anything needs attention.',
+  })
 }
 
 export async function sendSubscriptionConfirmationEmail(payload: SubscriptionEmailPayload): Promise<SentMessageInfo> {
@@ -301,6 +343,25 @@ export async function sendSubscriptionConfirmationEmail(payload: SubscriptionEma
   }
 
   const { subject, html, text } = buildSubscriptionConfirmationEmail(payload)
+
+  return transporter.sendMail({
+    from: `The Trash Panda <${fromAddress}>`,
+    to: payload.to,
+    subject,
+    html,
+    text,
+  })
+}
+
+export async function sendSubscriptionUpdateEmail(payload: SubscriptionEmailPayload): Promise<SentMessageInfo> {
+  const transporter = await getEmailTransporter()
+  const fromAddress = getFromAddress()
+
+  if (!fromAddress) {
+    throw new Error('Email routing is not configured. Please set SMTP_FROM (or SMTP_USER).')
+  }
+
+  const { subject, html, text } = buildSubscriptionUpdateEmail(payload)
 
   return transporter.sendMail({
     from: `The Trash Panda <${fromAddress}>`,
