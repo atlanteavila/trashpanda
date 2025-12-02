@@ -1,6 +1,7 @@
 const STRIPE_API_BASE = 'https://api.stripe.com/v1'
 
 let cachedSecretKey: string | null = null
+let cachedProductId: string | null = null
 
 function getStripeSecretKey() {
   if (cachedSecretKey) {
@@ -14,6 +15,20 @@ function getStripeSecretKey() {
 
   cachedSecretKey = secret
   return cachedSecretKey
+}
+
+function getStripeProductId() {
+  if (cachedProductId) {
+    return cachedProductId
+  }
+
+  const product = process.env.STRIPE_PRODUCT_ID
+  if (!product) {
+    throw new Error('STRIPE_PRODUCT_ID is not configured.')
+  }
+
+  cachedProductId = product
+  return cachedProductId
 }
 
 export interface StripeCheckoutItem {
@@ -229,6 +244,7 @@ export async function updateStripeSubscriptionItems(
   items: StripeSubscriptionServiceItem[],
 ): Promise<StripeSubscriptionUpdateResult> {
   const secretKey = getStripeSecretKey()
+  const productId = getStripeProductId()
   const subscription = await retrieveStripeSubscription(subscriptionId)
 
   const params = new URLSearchParams()
@@ -249,14 +265,12 @@ export async function updateStripeSubscriptionItems(
     params.append(`items[${index}][price_data][currency]`, 'usd')
     params.append(`items[${index}][price_data][unit_amount]`, String(Math.round(item.monthlyRate * 100)))
     params.append(`items[${index}][price_data][recurring][interval]`, 'month')
-    params.append(`items[${index}][price_data][product_data][name]`, item.name)
-    params.append(`items[${index}][price_data][product_data][description]`, item.frequency)
-    params.append(`items[${index}][price_data][product_data][metadata][serviceId]`, item.id)
+    params.append(`items[${index}][price_data][product]`, productId)
+    params.append(`items[${index}][price_data][nickname]`, item.name)
+    params.append(`items[${index}][price_data][metadata][serviceId]`, item.id)
+    params.append(`items[${index}][price_data][metadata][frequency]`, item.frequency)
     if (item.notes) {
-      params.append(
-        `items[${index}][price_data][product_data][metadata][notes]`,
-        item.notes.slice(0, 500),
-      )
+      params.append(`items[${index}][price_data][metadata][notes]`, item.notes.slice(0, 500))
     }
     index += 1
   })
