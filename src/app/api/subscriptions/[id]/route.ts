@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth'
 import { isAdminUser } from '@/lib/admin'
 import { requireSubscriptionDelegate } from '@/lib/prisma'
 import { sendSubscriptionUpdateEmail } from '@/lib/subscriptionEmails'
+import { updateStripeSubscriptionItems } from '@/lib/stripe'
 
 const SERVICE_DAY_VALUES = [
   'MONDAY',
@@ -203,6 +204,37 @@ export async function PATCH(
         ? null
         : existing.accessNotes ?? null
 
+  let stripeStatus = existing.stripeStatus ?? null
+  let stripePaymentStatus = existing.stripePaymentStatus ?? null
+
+  if (existing.stripeSubscriptionId) {
+    try {
+      const result = await updateStripeSubscriptionItems(
+        existing.stripeSubscriptionId,
+        services.map((service) => ({
+          id: service.id,
+          name: service.name,
+          quantity: service.quantity,
+          monthlyRate: service.monthlyRate,
+          frequency: service.frequency,
+          notes: service.notes,
+        })),
+      )
+
+      stripeStatus = result.status ?? stripeStatus
+      stripePaymentStatus = result.paymentStatus ?? stripePaymentStatus
+    } catch (error) {
+      console.error('Failed to update Stripe subscription items', error)
+      return NextResponse.json(
+        {
+          error:
+            'We could not update billing for this subscription. Please try again or verify your Stripe settings.',
+        },
+        { status: 502 },
+      )
+    }
+  }
+
   const updated = await subscriptions.update({
     where: { id: existing.id },
     data: {
@@ -219,6 +251,8 @@ export async function PATCH(
       monthlyTotal: safeTotal,
       status: normalizedStatus,
       accessNotes: normalizedAccessNotes && normalizedAccessNotes.length > 0 ? normalizedAccessNotes : null,
+      stripeStatus,
+      stripePaymentStatus,
     },
   })
 
