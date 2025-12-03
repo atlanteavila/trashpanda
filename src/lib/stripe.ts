@@ -266,11 +266,11 @@ export async function updateStripeSubscriptionItems(
     params.append(`items[${index}][price_data][unit_amount]`, String(Math.round(item.monthlyRate * 100)))
     params.append(`items[${index}][price_data][recurring][interval]`, 'month')
     params.append(`items[${index}][price_data][product]`, productId)
-    params.append(`items[${index}][price_data][metadata][serviceId]`, item.id)
-    params.append(`items[${index}][price_data][metadata][name]`, item.name)
-    params.append(`items[${index}][price_data][metadata][frequency]`, item.frequency)
+    params.append(`items[${index}][metadata][serviceId]`, item.id)
+    params.append(`items[${index}][metadata][name]`, item.name)
+    params.append(`items[${index}][metadata][frequency]`, item.frequency)
     if (item.notes) {
-      params.append(`items[${index}][price_data][metadata][notes]`, item.notes.slice(0, 500))
+      params.append(`items[${index}][metadata][notes]`, item.notes.slice(0, 500))
     }
     index += 1
   })
