@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client'
+import type { Prisma, Subscription } from '@prisma/client'
 
 import type {
   DashboardAddress,
@@ -84,7 +84,7 @@ export function normalizeDashboardAddresses(
 }
 
 export function mapSubscriptionToSnapshot(
-  subscription: Prisma.Subscription,
+  subscription: Subscription,
 ): SubscriptionSnapshot {
   return {
     id: subscription.id,
