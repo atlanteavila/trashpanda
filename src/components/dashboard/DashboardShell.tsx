@@ -1,6 +1,13 @@
 'use client'
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  FormEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react'
 import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
@@ -89,6 +96,7 @@ export interface DashboardShellProps {
   initialAddresses: DashboardAddress[]
   mode?: 'create' | 'edit'
   subscriptions?: SubscriptionSnapshot[]
+  embedded?: boolean
 }
 const BUNDLE_DISCOUNT_RATE = 0.1
 
@@ -403,11 +411,13 @@ export function DashboardShell({
   initialAddresses,
   mode = 'create',
   subscriptions = [],
+  embedded = false,
 }: DashboardShellProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const isEditMode = mode === 'edit'
+  const isEmbedded = embedded
 
   const [managedSubscriptions, setManagedSubscriptions] =
     useState<SubscriptionSnapshot[]>(subscriptions)
@@ -1075,32 +1085,61 @@ export function DashboardShell({
     ? 'Tune your existing plan, update billing preferences, and keep service details accurate.'
     : 'Review your plan, add new services, and keep your property sparkling.'
 
-  const headerActions = (
-    <>
-      {isEditMode ? (
-        <Button href="/dash/add" color="green">
-          Add subscription
-        </Button>
-      ) : (
-        <Button type="button" color="green" onClick={scrollToServiceForm}>
-          Add new service
-        </Button>
-      )}
-      <Button type="button" className='text-white hover:text-white/80' variant="outline" onClick={openAddressModal}>
-        Manage addresses
-      </Button>
-    </>
-  )
+  const headerActions = isEmbedded
+    ? null
+    : (
+        <>
+          {isEditMode ? (
+            <Button href="/dash/add" color="green">
+              Add subscription
+            </Button>
+          ) : (
+            <Button type="button" color="green" onClick={scrollToServiceForm}>
+              Add new service
+            </Button>
+          )}
+          <Button type="button" className='text-white hover:text-white/80' variant="outline" onClick={openAddressModal}>
+            Manage addresses
+          </Button>
+        </>
+      )
+
+  const renderLayout = (
+    content: ReactNode,
+    { hideActions = false }: { hideActions?: boolean } = {},
+  ) =>
+    isEmbedded ? (
+      <div className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+              {headerTitle}
+            </h1>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              {headerDescription}
+            </p>
+          </div>
+          {!hideActions && headerActions ? (
+            <div className="flex flex-wrap gap-3">{headerActions}</div>
+          ) : null}
+        </div>
+        {content}
+      </div>
+    ) : (
+      <DashboardScaffold
+        user={user}
+        title={headerTitle}
+        description={headerDescription}
+        actions={hideActions ? undefined : headerActions}
+      >
+        {content}
+      </DashboardScaffold>
+    )
 
   if (isEditMode && managedSubscriptions.length === 0) {
     return (
       <>
-        <DashboardScaffold
-          user={user}
-          title={headerTitle}
-          description={headerDescription}
-          actions={headerActions}
-        >
+        {renderLayout(
           <div className="mt-8 rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center shadow-sm dark:border-white/10 dark:bg-slate-900">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               No subscriptions yet
@@ -1112,8 +1151,8 @@ export function DashboardShell({
             <Button href="/dash/add" color="green" className="mt-6">
               Build your first subscription
             </Button>
-          </div>
-        </DashboardScaffold>
+          </div>,
+        )}
 
         <Dialog
           open={isAddressModalOpen}
@@ -1271,12 +1310,8 @@ export function DashboardShell({
     : null
   return (
     <>
-      <DashboardScaffold
-        user={user}
-        title={headerTitle}
-        description={headerDescription}
-        actions={headerActions}
-      >
+      {renderLayout(
+        <>
         {isEditMode && managedSubscriptions.length > 0 ? (
           <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -2029,7 +2064,8 @@ export function DashboardShell({
             ) : null}
           </aside>
         </div>
-      </DashboardScaffold>
+        </>
+      )}
 
       <Dialog
         open={isAddressModalOpen}

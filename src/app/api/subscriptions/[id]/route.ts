@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server'
 import { SubscriptionStatus } from '@prisma/client'
 
 import { auth } from '@/lib/auth'
+import { isAdminUser } from '@/lib/admin'
 import { requireSubscriptionDelegate } from '@/lib/prisma'
+import { sendSubscriptionUpdateEmail } from '@/lib/subscriptionEmails'
+import { updateStripeSubscriptionItems } from '@/lib/stripe'
 
 const SERVICE_DAY_VALUES = [
   'MONDAY',
@@ -162,10 +165,25 @@ export async function PATCH(
     )
   }
 
+  const isAdmin = isAdminUser(session.user)
+
   const existing = await subscriptions.findFirst({
     where: {
       id: subscriptionId,
-      userId: session.user.id,
+      ...(isAdmin
+        ? {}
+        : {
+            userId: session.user.id,
+          }),
+    },
+    include: {
+      user: {
+        select: {
+          email: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
     },
   })
 
@@ -174,7 +192,15 @@ export async function PATCH(
   }
 
   const normalizedStatus = normalizeStatus(payload.status) ?? existing.status
-  const safeTotal = Number.isFinite(payload.total) ? Number(payload.total) : existing.monthlyTotal ?? null
+
+  const calculatedTotal = Math.round(
+    services.reduce((sum, service) => sum + service.monthlyRate * service.quantity, 0) * 100,
+  ) / 100
+  const safeTotal = Number.isFinite(payload.total)
+    ? Number(payload.total)
+    : Number.isFinite(calculatedTotal)
+      ? calculatedTotal
+      : existing.monthlyTotal ?? null
   const hasServiceDay = Object.prototype.hasOwnProperty.call(payload, 'serviceDay')
   const preferredServiceDay = hasServiceDay
     ? normalizeServiceDay(payload.serviceDay) ?? null
@@ -186,11 +212,42 @@ export async function PATCH(
         ? null
         : existing.accessNotes ?? null
 
+  let stripeStatus = existing.stripeStatus ?? null
+  let stripePaymentStatus = existing.stripePaymentStatus ?? null
+
+  if (existing.stripeSubscriptionId) {
+    try {
+      const result = await updateStripeSubscriptionItems(
+        existing.stripeSubscriptionId,
+        services.map((service) => ({
+          id: service.id,
+          name: service.name,
+          quantity: service.quantity,
+          monthlyRate: service.monthlyRate,
+          frequency: service.frequency,
+          notes: service.notes,
+        })),
+      )
+
+      stripeStatus = result.status ?? stripeStatus
+      stripePaymentStatus = result.paymentStatus ?? stripePaymentStatus
+    } catch (error) {
+      console.error('Failed to update Stripe subscription items', error)
+      return NextResponse.json(
+        {
+          error:
+            'We could not update billing for this subscription. Please try again or verify your Stripe settings.',
+        },
+        { status: 502 },
+      )
+    }
+  }
+
   const updated = await subscriptions.update({
     where: { id: existing.id },
     data: {
-      planId: payload.planId ?? null,
-      planName: payload.planName ?? null,
+      planId: payload.planId === undefined ? existing.planId : payload.planId ?? null,
+      planName: payload.planName === undefined ? existing.planName : payload.planName ?? null,
       addressId: address.id,
       addressLabel: address.label,
       addressStreet: address.street,
@@ -202,11 +259,42 @@ export async function PATCH(
       monthlyTotal: safeTotal,
       status: normalizedStatus,
       accessNotes: normalizedAccessNotes && normalizedAccessNotes.length > 0 ? normalizedAccessNotes : null,
+      stripeStatus,
+      stripePaymentStatus,
     },
   })
 
+  let emailDispatched = true
+  try {
+    await sendSubscriptionUpdateEmail({
+      to: existing.user.email,
+      firstName: existing.user.firstName,
+      lastName: existing.user.lastName,
+      services,
+      address: {
+        label: address.label,
+        street: address.street,
+        city: address.city,
+        state: address.state,
+        postalCode: address.postalCode,
+      },
+      serviceDay: updated.preferredServiceDay ?? null,
+      planName: updated.planName ?? null,
+      monthlyTotal: updated.monthlyTotal ?? null,
+      accessNotes: updated.accessNotes ?? null,
+      supportEmail: process.env.CONTACT_RECIPIENT ?? undefined,
+      supportPhone: process.env.CONTACT_PHONE ?? undefined,
+    })
+  } catch (error) {
+    emailDispatched = false
+    console.error('Failed to send subscription update email', error)
+  }
+
   return NextResponse.json({
-    message: 'Subscription updated successfully.',
+    message: emailDispatched
+      ? 'Subscription updated successfully.'
+      : 'Subscription updated, but we could not send the confirmation email. Please check SMTP settings.',
+    emailDispatched,
     subscription: {
       id: updated.id,
       planId: updated.planId,

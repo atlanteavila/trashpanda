@@ -3,31 +3,41 @@ import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { auth } from '@/lib/auth'
+import { isAdminUser } from '@/lib/admin'
 
 export const metadata: Metadata = {
   title: 'Dashboard overview',
 }
-
-const options = [
-  {
-    title: 'Manage subscriptions',
-    description: 'Update existing plans, adjust services, and review billing.',
-    href: '/dash/manage',
-    cta: 'Open manager',
-  },
-  {
-    title: 'Add a subscription',
-    description: 'Build a brand-new plan and schedule a fresh checkout.',
-    href: '/dash/add',
-    cta: 'Start building',
-  },
-] as const
 
 export default async function DashboardLandingPage() {
   const session = await auth()
 
   if (!session?.user) {
     redirect('/login')
+  }
+
+  const options = [
+    {
+      title: 'Manage subscriptions',
+      description: 'Update existing plans, adjust services, and review billing.',
+      href: '/dash/manage',
+      cta: 'Open manager',
+    },
+    {
+      title: 'Add a subscription',
+      description: 'Build a brand-new plan and schedule a fresh checkout.',
+      href: '/dash/add',
+      cta: 'Start building',
+    },
+  ]
+
+  if (isAdminUser(session.user)) {
+    options.unshift({
+      title: 'Admin subscription dashboard',
+      description: 'Search and edit any customer subscription from a single view.',
+      href: '/dash/admin',
+      cta: 'Open admin tools',
+    })
   }
 
   return (

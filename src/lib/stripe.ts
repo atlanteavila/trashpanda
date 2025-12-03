@@ -1,6 +1,7 @@
 const STRIPE_API_BASE = 'https://api.stripe.com/v1'
 
 let cachedSecretKey: string | null = null
+let cachedProductId: string | null = null
 
 function getStripeSecretKey() {
   if (cachedSecretKey) {
@@ -14,6 +15,20 @@ function getStripeSecretKey() {
 
   cachedSecretKey = secret
   return cachedSecretKey
+}
+
+function getStripeProductId() {
+  if (cachedProductId) {
+    return cachedProductId
+  }
+
+  const product = process.env.STRIPE_PRODUCT_ID
+  if (!product) {
+    throw new Error('STRIPE_PRODUCT_ID is not configured.')
+  }
+
+  cachedProductId = product
+  return cachedProductId
 }
 
 export interface StripeCheckoutItem {
@@ -118,6 +133,19 @@ export interface StripeCheckoutSessionDetails {
   metadata?: Record<string, string | null | undefined>
 }
 
+export interface StripeSubscriptionItemDetails {
+  id: string
+}
+
+export interface StripeSubscriptionDetails {
+  id: string
+  status: string | null
+  items: {
+    data: StripeSubscriptionItemDetails[]
+  }
+  latest_invoice?: { status?: string | null } | null
+}
+
 export async function retrieveStripeCheckoutSession(
   sessionId: string,
 ): Promise<StripeCheckoutSessionDetails> {
@@ -154,6 +182,120 @@ export async function retrieveStripeCheckoutSession(
     customer: data.customer ?? null,
     subscription: data.subscription ?? null,
     metadata: data.metadata ?? {},
+  }
+}
+
+export async function retrieveStripeSubscription(
+  subscriptionId: string,
+): Promise<StripeSubscriptionDetails> {
+  const secretKey = getStripeSecretKey()
+
+  const response = await fetch(
+    `${STRIPE_API_BASE}/subscriptions/${subscriptionId}?expand[]=latest_invoice`,
+    {
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+      },
+    },
+  )
+
+  const data = (await response.json()) as StripeSubscriptionDetails & {
+    error?: { message?: string }
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error?.message ?? 'Stripe returned an error response.')
+  }
+
+  if (!data.id || !data.items) {
+    throw new Error('Stripe did not return the subscription requested.')
+  }
+
+  return {
+    id: data.id,
+    status: data.status ?? null,
+    latest_invoice: data.latest_invoice ?? null,
+    items: {
+      data: Array.isArray(data.items?.data)
+        ? data.items.data
+            .map((item) => (item && typeof item.id === 'string' ? { id: item.id } : null))
+            .filter((item): item is StripeSubscriptionItemDetails => Boolean(item))
+        : [],
+    },
+  }
+}
+
+export interface StripeSubscriptionServiceItem {
+  id: string
+  name: string
+  quantity: number
+  monthlyRate: number
+  frequency: string
+  notes?: string | null
+}
+
+export interface StripeSubscriptionUpdateResult {
+  status: string | null
+  paymentStatus: string | null
+}
+
+export async function updateStripeSubscriptionItems(
+  subscriptionId: string,
+  items: StripeSubscriptionServiceItem[],
+): Promise<StripeSubscriptionUpdateResult> {
+  const secretKey = getStripeSecretKey()
+  const productId = getStripeProductId()
+  const subscription = await retrieveStripeSubscription(subscriptionId)
+
+  const params = new URLSearchParams()
+  params.append('proration_behavior', 'always_invoice')
+  params.append('cancel_at_period_end', 'false')
+
+  let index = 0
+  if (Array.isArray(subscription.items?.data)) {
+    subscription.items.data.forEach((item) => {
+      params.append(`items[${index}][id]`, item.id)
+      params.append(`items[${index}][deleted]`, 'true')
+      index += 1
+    })
+  }
+
+  items.forEach((item) => {
+    params.append(`items[${index}][quantity]`, String(Math.max(1, Math.round(item.quantity))))
+    params.append(`items[${index}][price_data][currency]`, 'usd')
+    params.append(`items[${index}][price_data][unit_amount]`, String(Math.round(item.monthlyRate * 100)))
+    params.append(`items[${index}][price_data][recurring][interval]`, 'month')
+    params.append(`items[${index}][price_data][product]`, productId)
+    params.append(`items[${index}][metadata][serviceId]`, item.id)
+    params.append(`items[${index}][metadata][name]`, item.name)
+    params.append(`items[${index}][metadata][frequency]`, item.frequency)
+    if (item.notes) {
+      params.append(`items[${index}][metadata][notes]`, item.notes.slice(0, 500))
+    }
+    index += 1
+  })
+
+  const response = await fetch(`${STRIPE_API_BASE}/subscriptions/${subscriptionId}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: params.toString(),
+  })
+
+  const data = (await response.json()) as StripeSubscriptionDetails & {
+    latest_invoice?: { status?: string | null } | null
+    error?: { message?: string }
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error?.message ?? 'Stripe returned an error response.')
+  }
+
+  return {
+    status: data.status ?? null,
+    paymentStatus: data.latest_invoice?.status ?? null,
   }
 }
 
