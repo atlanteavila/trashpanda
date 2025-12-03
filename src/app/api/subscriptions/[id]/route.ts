@@ -192,7 +192,15 @@ export async function PATCH(
   }
 
   const normalizedStatus = normalizeStatus(payload.status) ?? existing.status
-  const safeTotal = Number.isFinite(payload.total) ? Number(payload.total) : existing.monthlyTotal ?? null
+
+  const calculatedTotal = Math.round(
+    services.reduce((sum, service) => sum + service.monthlyRate * service.quantity, 0) * 100,
+  ) / 100
+  const safeTotal = Number.isFinite(payload.total)
+    ? Number(payload.total)
+    : Number.isFinite(calculatedTotal)
+      ? calculatedTotal
+      : existing.monthlyTotal ?? null
   const hasServiceDay = Object.prototype.hasOwnProperty.call(payload, 'serviceDay')
   const preferredServiceDay = hasServiceDay
     ? normalizeServiceDay(payload.serviceDay) ?? null
@@ -238,8 +246,8 @@ export async function PATCH(
   const updated = await subscriptions.update({
     where: { id: existing.id },
     data: {
-      planId: payload.planId ?? null,
-      planName: payload.planName ?? null,
+      planId: payload.planId === undefined ? existing.planId : payload.planId ?? null,
+      planName: payload.planName === undefined ? existing.planName : payload.planName ?? null,
       addressId: address.id,
       addressLabel: address.label,
       addressStreet: address.street,
