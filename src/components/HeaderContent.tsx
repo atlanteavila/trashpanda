@@ -82,6 +82,7 @@ const navigation = {
     },
   ],
   pages: [
+    { name: 'Get a Quote', href: '/quote' },
     { name: 'Pricing', href: '/#pricing' },
     { name: 'Contact', href: '/contact' },
   ],
