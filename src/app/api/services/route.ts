@@ -53,18 +53,39 @@ const DEFAULT_SERVICES = [
 export async function GET() {
   try {
     let services = await prisma.service.findMany({
-      where: { active: true },
       orderBy: { name: 'asc' },
     })
 
-    if (services.length === 0) {
-      services = await prisma.$transaction(
-        DEFAULT_SERVICES.map((service) =>
-          prisma.service.create({
-            data: service,
-          }),
-        ),
-      )
+    const serviceByName = new Map(services.map((service) => [service.name, service]))
+
+    const mutations = DEFAULT_SERVICES.flatMap((service) => {
+      const existing = serviceByName.get(service.name)
+      if (!existing) {
+        return [prisma.service.create({ data: service })]
+      }
+
+      const needsUpdate =
+        existing.price !== service.price ||
+        existing.description !== service.description ||
+        existing.unit !== service.unit ||
+        existing.savings !== service.savings ||
+        existing.active === false
+
+      return needsUpdate
+        ? [
+            prisma.service.update({
+              where: { id: existing.id },
+              data: { ...service, active: true },
+            }),
+          ]
+        : []
+    })
+
+    if (mutations.length > 0) {
+      await prisma.$transaction(mutations)
+      services = await prisma.service.findMany({ where: { active: true }, orderBy: { name: 'asc' } })
+    } else {
+      services = services.filter((service) => service.active)
     }
 
     return NextResponse.json({ services })
