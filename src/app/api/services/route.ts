@@ -4,28 +4,49 @@ import { prisma } from '@/lib/prisma'
 
 const DEFAULT_SERVICES = [
   {
-    name: 'Curbside Classic',
-    description: 'Weekly trash can roll-out and return with reminder texts.',
-    price: 19.99,
-    unit: 'per month',
-  },
-  {
     name: 'Home Care Basic',
-    description: 'Weekly trash help plus twice-monthly yard freshness.',
     price: 44.99,
-    unit: 'per month',
+    savings: 'Save $5.00 each month',
+    unit: 'mo',
+    description: 'Weekly trash service plus twice-monthly poop scoop visits.',
   },
   {
     name: 'Home Care Plus',
-    description: 'Premium curbside concierge service with seasonal extras.',
     price: 57.59,
-    unit: 'per month',
+    savings: 'Save $6.40 each month',
+    unit: 'mo',
+    description:
+      'Trash pickup with bin washing (two cans) and porch blowing twice per month.',
   },
   {
-    name: 'One-Time Deep Clean',
-    description: 'Single-visit bin cleaning and sanitation for two cans.',
-    price: 29.0,
-    unit: 'per visit',
+    name: 'Trash Can Take-Out & Return',
+    price: 19.99,
+    unit: 'mo',
+    description: 'Weekly base subscription; final pricing confirmed after visit.',
+  },
+  {
+    name: 'Bin Washing',
+    price: 7.0,
+    unit: 'can',
+    description: 'Monthly or bi-monthly; billed per can.',
+  },
+  {
+    name: 'Poop Scoop',
+    price: 15.0,
+    unit: 'visit / month',
+    description: 'Bi-weekly (2 visits per month); final pricing confirmed after visit.',
+  },
+  {
+    name: 'Porch / Driveway Blowing',
+    price: 15.0,
+    unit: 'visit / month',
+    description: 'As needed; ideal before hosting or after storms.',
+  },
+  {
+    name: 'Yard Raking',
+    price: 8.33,
+    unit: 'visit / season',
+    description: 'Seasonal autumn service averaged across 3-month fall season.',
   },
 ]
 

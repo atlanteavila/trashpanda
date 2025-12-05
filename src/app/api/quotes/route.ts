@@ -124,6 +124,7 @@ export async function POST(request: Request) {
         id: service.id,
         name: service.name,
         description: service.description,
+        savings: service.savings,
         price: service.price,
         unit: service.unit,
         quantity,

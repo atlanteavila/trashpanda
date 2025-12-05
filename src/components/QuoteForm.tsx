@@ -11,6 +11,7 @@ type Service = {
   id: string
   name: string
   description?: string | null
+  savings?: string | null
   price: number
   unit?: string | null
 }
@@ -29,6 +30,7 @@ type SavedQuote = {
     id: string
     name: string
     price: number
+    savings?: string | null
     quantity?: number | null
     unit?: string | null
     description?: string | null
@@ -236,6 +238,11 @@ export function QuoteForm({ className }: { className?: string }) {
                     {service.description ? (
                       <p className="mt-1 text-sm text-slate-600">
                         {service.description}
+                      </p>
+                    ) : null}
+                    {service.savings ? (
+                      <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                        {service.savings}
                       </p>
                     ) : null}
                     <p className="mt-3 text-base font-medium text-emerald-700">

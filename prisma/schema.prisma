@@ -31,6 +31,7 @@ model Service {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   description String?
+  savings     String?
   price       Float
   unit        String?
   active      Boolean  @default(true)
