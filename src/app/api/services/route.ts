@@ -53,6 +53,13 @@ const DEFAULT_SERVICES = [
 
 const defaultSavingsByName = new Map(DEFAULT_SERVICES.map((service) => [service.name, service.savings]))
 
+function withoutSavings<T extends { savings?: string | null }>(service: T) {
+  // Omit the savings field entirely so Prisma does not receive an unknown column
+  // when the database schema or generated client lacks it.
+  const { savings: _savings, ...rest } = service
+  return rest
+}
+
 function applyDefaultSavings<T extends { name: string; savings?: string | null }>(services: T[]) {
   return services.map((service) => ({
     ...service,
@@ -74,7 +81,7 @@ async function syncAndFetchServices(includeSavings: boolean) {
   const mutations = DEFAULT_SERVICES.flatMap((service) => {
     const existing = serviceByName.get(service.name)
     if (!existing) {
-      const data = includeSavings ? service : { ...service, savings: undefined }
+      const data = includeSavings ? service : withoutSavings(service)
       return [prisma.service.create({ data })]
     }
 
@@ -87,7 +94,7 @@ async function syncAndFetchServices(includeSavings: boolean) {
 
     if (!needsUpdate) return []
 
-    const data = includeSavings ? { ...service, active: true } : { ...service, savings: undefined, active: true }
+    const data = includeSavings ? { ...service, active: true } : { ...withoutSavings(service), active: true }
     return [prisma.service.update({ where: { id: existing.id }, data })]
   })
 
