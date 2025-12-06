@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/prisma'
@@ -50,46 +51,67 @@ const DEFAULT_SERVICES = [
   },
 ]
 
-export async function GET() {
-  try {
-    let services = await prisma.service.findMany({
-      orderBy: { name: 'asc' },
-    })
+const defaultSavingsByName = new Map(DEFAULT_SERVICES.map((service) => [service.name, service.savings]))
 
-    const serviceByName = new Map(services.map((service) => [service.name, service]))
+function applyDefaultSavings<T extends { name: string; savings?: string | null }>(services: T[]) {
+  return services.map((service) => ({
+    ...service,
+    savings: service.savings ?? defaultSavingsByName.get(service.name) ?? null,
+  }))
+}
 
-    const mutations = DEFAULT_SERVICES.flatMap((service) => {
-      const existing = serviceByName.get(service.name)
-      if (!existing) {
-        return [prisma.service.create({ data: service })]
-      }
+function isSavingsValidationError(error: unknown) {
+  return error instanceof Prisma.PrismaClientValidationError && error.message.includes('savings')
+}
 
-      const needsUpdate =
-        existing.price !== service.price ||
-        existing.description !== service.description ||
-        existing.unit !== service.unit ||
-        existing.savings !== service.savings ||
-        existing.active === false
+async function syncAndFetchServices(includeSavings: boolean) {
+  let services = await prisma.service.findMany({
+    orderBy: { name: 'asc' },
+  })
 
-      return needsUpdate
-        ? [
-            prisma.service.update({
-              where: { id: existing.id },
-              data: { ...service, active: true },
-            }),
-          ]
-        : []
-    })
+  const serviceByName = new Map(services.map((service) => [service.name, service]))
 
-    if (mutations.length > 0) {
-      await prisma.$transaction(mutations)
-      services = await prisma.service.findMany({ where: { active: true }, orderBy: { name: 'asc' } })
-    } else {
-      services = services.filter((service) => service.active)
+  const mutations = DEFAULT_SERVICES.flatMap((service) => {
+    const existing = serviceByName.get(service.name)
+    if (!existing) {
+      const data = includeSavings ? service : { ...service, savings: undefined }
+      return [prisma.service.create({ data })]
     }
 
-    return NextResponse.json({ services })
+    const needsUpdate =
+      existing.price !== service.price ||
+      existing.description !== service.description ||
+      existing.unit !== service.unit ||
+      (includeSavings && existing.savings !== service.savings) ||
+      existing.active === false
+
+    if (!needsUpdate) return []
+
+    const data = includeSavings ? { ...service, active: true } : { ...service, savings: undefined, active: true }
+    return [prisma.service.update({ where: { id: existing.id }, data })]
+  })
+
+  if (mutations.length > 0) {
+    await prisma.$transaction(mutations)
+    services = await prisma.service.findMany({ where: { active: true }, orderBy: { name: 'asc' } })
+  } else {
+    services = services.filter((service) => service.active)
+  }
+
+  return services
+}
+
+export async function GET() {
+  try {
+    const services = await syncAndFetchServices(true)
+    return NextResponse.json({ services: applyDefaultSavings(services) })
   } catch (error) {
+    if (isSavingsValidationError(error)) {
+      console.warn('Service savings field unavailable in Prisma client; retrying without savings persistence.')
+      const services = await syncAndFetchServices(false)
+      return NextResponse.json({ services: applyDefaultSavings(services) })
+    }
+
     console.error('Failed to load services', error)
     return NextResponse.json(
       { error: 'Unable to load services right now. Please try again later.' },
