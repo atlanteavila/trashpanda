@@ -1,5 +1,6 @@
 import { type Metadata } from 'next'
 import '@/styles/tailwind.css'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 export const metadata: Metadata = {
   title: {
@@ -26,7 +27,11 @@ export default function RootLayout({
           content="1374FA3081CE62881036F1D26F825697"
         />
       </head>
-      <body className="flex h-full flex-col bg-white dark:bg-gray-900">{children}</body>
+      <body className="flex h-full flex-col bg-white dark:bg-gray-900">
+        {/* Keep analytics mounted once in the root layout for every page. */}
+        <GoogleAnalytics />
+        {children}
+      </body>
     </html>
   )
 }
