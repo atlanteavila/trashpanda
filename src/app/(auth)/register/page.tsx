@@ -1,10 +1,12 @@
 import { type Metadata } from 'next'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 
 import { Button } from '@/components/Button'
 import { SelectField, TextField } from '@/components/Fields'
 import { Logo } from '@/components/Logo'
 import { SlimLayout } from '@/components/SlimLayout'
+import prisma from '@/lib/prisma'
 import { US_STATES } from '@/lib/us-states'
 
 export const metadata: Metadata = {
@@ -25,6 +27,10 @@ export default async function Register({
   const resolvedSearchParams = (await searchParams) ?? {}
   const errorParam = resolvedSearchParams.error
   const errorMessage = Array.isArray(errorParam) ? errorParam[0] : errorParam
+  const quoteId = cookies().get('quoteId')?.value
+  const savedQuote = quoteId
+    ? await prisma.quote.findUnique({ where: { id: quoteId } })
+    : null
 
   return (
     <SlimLayout>
@@ -51,6 +57,11 @@ export default async function Register({
           {errorMessage}
         </p>
       ) : null}
+      {savedQuote ? (
+        <p className="mt-6 rounded-md border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          We found your saved quote and pre-filled your details. Review below and finish creating your account.
+        </p>
+      ) : null}
       <form
         action="/api/auth/register"
         method="post"
@@ -61,6 +72,7 @@ export default async function Register({
           name="first_name"
           type="text"
           autoComplete="given-name"
+          defaultValue={savedQuote?.firstName}
           required
         />
         <TextField
@@ -68,6 +80,7 @@ export default async function Register({
           name="last_name"
           type="text"
           autoComplete="family-name"
+          defaultValue={savedQuote?.lastName}
           required
         />
         <TextField
@@ -76,6 +89,7 @@ export default async function Register({
           name="email"
           type="email"
           autoComplete="email"
+          defaultValue={savedQuote?.email}
           required
         />
         <TextField
@@ -85,6 +99,7 @@ export default async function Register({
           type="tel"
           inputMode="tel"
           autoComplete="tel"
+          defaultValue={savedQuote?.phone ?? undefined}
           required
         />
         <TextField
@@ -101,6 +116,7 @@ export default async function Register({
           name="street"
           type="text"
           autoComplete="street-address"
+          defaultValue={savedQuote?.street ?? undefined}
           required
         />
         <TextField
@@ -108,12 +124,14 @@ export default async function Register({
           name="city"
           type="text"
           autoComplete="address-level2"
+          defaultValue={savedQuote?.city ?? undefined}
           required
         />
         <SelectField
           label="State"
           name="state"
           autoComplete="address-level1"
+          defaultValue={savedQuote?.state ?? ''}
           required
         >
           <option value="">Select a state</option>
@@ -129,6 +147,7 @@ export default async function Register({
           type="text"
           inputMode="numeric"
           autoComplete="postal-code"
+          defaultValue={savedQuote?.postalCode ?? undefined}
           required
         />
         <SelectField
