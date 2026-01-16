@@ -24,6 +24,12 @@ export default async function DashboardLandingPage() {
       cta: 'Open manager',
     },
     {
+      title: 'Custom plans',
+      description: 'Review custom plans created by admin and manage status.',
+      href: '/dash/custom-plans',
+      cta: 'View custom plans',
+    },
+    {
       title: 'Add a subscription',
       description: 'Build a brand-new plan and schedule a fresh checkout.',
       href: '/dash/add',
