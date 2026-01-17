@@ -38,6 +38,12 @@ type CustomEstimate = {
   acceptedAt?: string | null
   paidAt?: string | null
   createdAt: string
+  user?: {
+    email: string
+    firstName?: string | null
+    lastName?: string | null
+    name?: string | null
+  }
 }
 
 const serviceDayLabels: Record<string, string> = {
@@ -59,6 +65,14 @@ function formatServiceDay(value?: string | null) {
     return ''
   }
   return serviceDayLabels[value] ?? value
+}
+
+function formatUserLabel(user?: CustomEstimate['user']) {
+  if (!user) {
+    return ''
+  }
+  const displayName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
+  return (user.name ?? displayName) || user.email
 }
 
 export function CustomPlansDashboard({
@@ -121,6 +135,11 @@ export function CustomPlansDashboard({
                   {estimate.preferredServiceDay ? (
                     <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                       Preferred day: {formatServiceDay(estimate.preferredServiceDay)}
+                    </p>
+                  ) : null}
+                  {estimate.user ? (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Customer: {formatUserLabel(estimate.user)}
                     </p>
                   ) : null}
                 </div>

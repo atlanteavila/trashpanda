@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 
 import { CustomPlansDashboard } from '@/components/dashboard/CustomPlansDashboard'
 import { auth } from '@/lib/auth'
+import { isAdminUser } from '@/lib/admin'
 import prisma from '@/lib/prisma'
 
 export const metadata: Metadata = {
@@ -16,9 +17,23 @@ export default async function CustomPlansPage() {
     redirect('/login')
   }
 
+  const isAdmin = isAdminUser(session.user)
+
   const estimates = await prisma.customEstimate.findMany({
-    where: { userId: session.user.id },
+    where: isAdmin ? undefined : { userId: session.user.id },
     orderBy: { createdAt: 'desc' },
+    include: isAdmin
+      ? {
+          user: {
+            select: {
+              email: true,
+              firstName: true,
+              lastName: true,
+              name: true,
+            },
+          },
+        }
+      : undefined,
   })
 
   return (
@@ -33,6 +48,7 @@ export default async function CustomPlansPage() {
         acceptedAt: estimate.acceptedAt?.toISOString() ?? null,
         paidAt: estimate.paidAt?.toISOString() ?? null,
         createdAt: estimate.createdAt.toISOString(),
+        user: estimate.user ?? undefined,
       }))}
     />
   )
