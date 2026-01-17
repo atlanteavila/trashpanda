@@ -591,8 +591,8 @@ export function AdminCustomPlansDashboard({
                     className="rounded-xl border border-gray-200 p-4 text-sm dark:border-white/10"
                   >
                     <p className="font-semibold text-gray-900 dark:text-white">
-                      {estimate.user.name ??
-                        `${estimate.user.firstName ?? ''} ${estimate.user.lastName ?? ''}`.trim() ||
+                      {(estimate.user.name ??
+                        `${estimate.user.firstName ?? ''} ${estimate.user.lastName ?? ''}`.trim()) ||
                         estimate.user.email}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
