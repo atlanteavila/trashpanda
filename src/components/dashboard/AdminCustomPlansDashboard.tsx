@@ -645,5 +645,5 @@ function formatEstimateUserLabel(estimate: CustomEstimate) {
     return 'Unknown customer'
   }
   const displayName = `${estimate.user.firstName ?? ''} ${estimate.user.lastName ?? ''}`.trim()
-  return estimate.user.name ?? displayName || estimate.user.email
+  return (estimate.user.name ?? displayName) || estimate.user.email
 }
