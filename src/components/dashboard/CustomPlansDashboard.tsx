@@ -91,12 +91,13 @@ export function CustomPlansDashboard({
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const selectableItems = useMemo(
+  const payableItems = useMemo(
     () =>
       items.filter(
         (estimate) =>
           estimate.paymentStatus === 'PENDING' &&
-          estimate.status !== 'CANCELLED',
+          estimate.status !== 'CANCELLED' &&
+          estimate.status !== 'DRAFT',
       ),
     [items],
   )
@@ -250,7 +251,7 @@ export function CustomPlansDashboard({
         </div>
       ) : null}
 
-      {!isAdmin && selectableItems.length > 0 ? (
+      {!isAdmin && payableItems.length > 0 ? (
         <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-slate-900">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -271,6 +272,18 @@ export function CustomPlansDashboard({
               {checkoutStatus === 'loading' ? 'Starting…' : 'Checkout selected'}
             </Button>
           </div>
+        </div>
+      ) : null}
+      {!isAdmin && payableItems.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-6 py-4 text-sm text-gray-600 dark:border-white/10 dark:bg-slate-900 dark:text-gray-300">
+          Checkout becomes available once a custom plan is sent to you for
+          approval.
+        </div>
+      ) : null}
+      {isAdmin ? (
+        <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-6 py-4 text-sm text-gray-600 dark:border-white/10 dark:bg-slate-900 dark:text-gray-300">
+          Customer checkout buttons are hidden for admins. Sign in as the
+          customer to complete payment.
         </div>
       ) : null}
 
@@ -311,7 +324,9 @@ export function CustomPlansDashboard({
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Created {new Date(estimate.createdAt).toLocaleDateString()}
                   </p>
-                  {!isAdmin && estimate.paymentStatus === 'PENDING' ? (
+                  {!isAdmin &&
+                  estimate.paymentStatus === 'PENDING' &&
+                  estimate.status !== 'DRAFT' ? (
                     <Button
                       type="button"
                       color="green"
@@ -370,7 +385,9 @@ export function CustomPlansDashboard({
               ) : null}
 
               <div className="mt-4 flex flex-wrap gap-3">
-                {!isAdmin && estimate.paymentStatus === 'PENDING' ? (
+                {!isAdmin &&
+                estimate.paymentStatus === 'PENDING' &&
+                estimate.status !== 'DRAFT' ? (
                   <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-400">
                     <input
                       type="checkbox"
