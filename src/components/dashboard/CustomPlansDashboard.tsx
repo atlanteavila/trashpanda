@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 import { Button } from '@/components/Button'
 
@@ -77,10 +78,135 @@ function formatUserLabel(user?: CustomEstimate['user']) {
 
 export function CustomPlansDashboard({
   estimates,
+  isAdmin,
 }: {
   estimates: CustomEstimate[]
+  isAdmin: boolean
 }) {
   const [items, setItems] = useState<CustomEstimate[]>(estimates)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [checkoutNotice, setCheckoutNotice] = useState<string>('')
+  const [checkoutError, setCheckoutError] = useState<string>('')
+  const [checkoutStatus, setCheckoutStatus] = useState<'idle' | 'loading'>('idle')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const selectableItems = useMemo(
+    () =>
+      items.filter(
+        (estimate) =>
+          estimate.paymentStatus === 'PENDING' &&
+          estimate.status !== 'CANCELLED',
+      ),
+    [items],
+  )
+
+  useEffect(() => {
+    if (isAdmin) {
+      return
+    }
+
+    const outcome = searchParams.get('checkout')
+    if (!outcome) {
+      return
+    }
+
+    const sessionId = searchParams.get('session_id') ?? ''
+    const finalize = async () => {
+      try {
+        setCheckoutStatus('loading')
+        const response = await fetch('/api/custom-estimates/finalize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            outcome,
+            sessionId,
+          }),
+        })
+        const data = await response.json().catch(() => null)
+        if (response.ok) {
+          setCheckoutNotice(
+            typeof data?.message === 'string' ? data.message : 'Checkout complete.',
+          )
+          if (Array.isArray(data?.estimateIds)) {
+            const updatedIds = data.estimateIds as string[]
+            setItems((prev) =>
+              prev.map((estimate) =>
+                updatedIds.includes(estimate.id)
+                  ? {
+                      ...estimate,
+                      paymentStatus: 'PAID',
+                      status: 'ACTIVE',
+                    }
+                  : estimate,
+              ),
+            )
+            setSelectedIds((prev) =>
+              prev.filter((id) => !updatedIds.includes(id)),
+            )
+          }
+        } else {
+          setCheckoutError(
+            typeof data?.error === 'string'
+              ? data.error
+              : 'Unable to finalize checkout.',
+          )
+        }
+      } catch (error) {
+        setCheckoutError(
+          error instanceof Error ? error.message : 'Unable to finalize checkout.',
+        )
+      } finally {
+        setCheckoutStatus('idle')
+        router.replace('/dash/custom-plans', { scroll: false })
+      }
+    }
+
+    finalize()
+  }, [isAdmin, router, searchParams])
+
+  const handleToggleSelection = (estimateId: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(estimateId)
+        ? prev.filter((id) => id !== estimateId)
+        : [...prev, estimateId],
+    )
+  }
+
+  const startCheckout = async (estimateIds: string[]) => {
+    if (estimateIds.length === 0) {
+      setCheckoutError('Select at least one custom plan to checkout.')
+      return
+    }
+
+    try {
+      setCheckoutStatus('loading')
+      setCheckoutError('')
+      const response = await fetch('/api/custom-estimates/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estimateIds }),
+      })
+      const data = await response.json().catch(() => null)
+      if (!response.ok) {
+        setCheckoutError(
+          typeof data?.error === 'string'
+            ? data.error
+            : 'Unable to start checkout.',
+        )
+        return
+      }
+      if (typeof data?.url === 'string') {
+        window.location.href = data.url
+      }
+    } catch (error) {
+      setCheckoutError(
+        error instanceof Error ? error.message : 'Unable to start checkout.',
+      )
+    } finally {
+      setCheckoutStatus('idle')
+    }
+  }
 
   const handleUpdateStatus = async (
     estimateId: string,
@@ -112,6 +238,41 @@ export function CustomPlansDashboard({
           Review your custom plans, confirm details, or pause/cancel service.
         </p>
       </header>
+
+      {checkoutNotice ? (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-6 py-4 text-sm text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100">
+          {checkoutNotice}
+        </div>
+      ) : null}
+      {checkoutError ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-6 py-4 text-sm text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
+          {checkoutError}
+        </div>
+      ) : null}
+
+      {!isAdmin && selectableItems.length > 0 ? (
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-slate-900">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                Checkout custom plans
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Select one or more plans to pay together, or checkout
+                individually below.
+              </p>
+            </div>
+            <Button
+              type="button"
+              color="green"
+              disabled={checkoutStatus === 'loading' || selectedIds.length === 0}
+              onClick={() => startCheckout(selectedIds)}
+            >
+              {checkoutStatus === 'loading' ? 'Starting…' : 'Checkout selected'}
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-6 py-10 text-center text-gray-600 dark:border-white/10 dark:bg-slate-900 dark:text-gray-300">
@@ -150,6 +311,16 @@ export function CustomPlansDashboard({
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Created {new Date(estimate.createdAt).toLocaleDateString()}
                   </p>
+                  {!isAdmin && estimate.paymentStatus === 'PENDING' ? (
+                    <Button
+                      type="button"
+                      color="green"
+                      className="mt-3"
+                      onClick={() => startCheckout([estimate.id])}
+                    >
+                      Pay this plan
+                    </Button>
+                  ) : null}
                 </div>
               </div>
 
@@ -199,6 +370,17 @@ export function CustomPlansDashboard({
               ) : null}
 
               <div className="mt-4 flex flex-wrap gap-3">
+                {!isAdmin && estimate.paymentStatus === 'PENDING' ? (
+                  <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-400">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(estimate.id)}
+                      onChange={() => handleToggleSelection(estimate.id)}
+                      className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    />
+                    Select for checkout
+                  </label>
+                ) : null}
                 {estimate.status === 'SENT' ? (
                   <Button
                     type="button"

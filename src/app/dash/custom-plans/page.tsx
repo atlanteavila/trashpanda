@@ -50,6 +50,7 @@ export default async function CustomPlansPage() {
         createdAt: estimate.createdAt.toISOString(),
         user: estimate.user ?? undefined,
       }))}
+      isAdmin={isAdmin}
     />
   )
 }
