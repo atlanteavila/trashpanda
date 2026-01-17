@@ -95,6 +95,9 @@ export function AdminSubscriptionsDashboard({
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Button href="/dash/admin/custom-plans" className="rounded-full">
+            Custom plans
+          </Button>
           <div className="relative">
             <input
               type="search"
