@@ -80,6 +80,17 @@ export async function PATCH(
   const updated = await prisma.customEstimate.update({
     where: { id: estimateId },
     data: updates,
+    include: {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          name: true,
+        },
+      },
+    },
   })
 
   return NextResponse.json({ estimate: updated })

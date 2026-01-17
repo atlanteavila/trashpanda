@@ -49,7 +49,7 @@ type CustomEstimate = {
   acceptedAt?: string | null
   paidAt?: string | null
   createdAt: string
-  user: Pick<AdminUser, 'id' | 'email' | 'firstName' | 'lastName' | 'name'>
+  user?: Pick<AdminUser, 'id' | 'email' | 'firstName' | 'lastName' | 'name'>
 }
 
 const serviceDayOptions = [
@@ -591,9 +591,7 @@ export function AdminCustomPlansDashboard({
                     className="rounded-xl border border-gray-200 p-4 text-sm dark:border-white/10"
                   >
                     <p className="font-semibold text-gray-900 dark:text-white">
-                      {(estimate.user.name ??
-                        `${estimate.user.firstName ?? ''} ${estimate.user.lastName ?? ''}`.trim()) ||
-                        estimate.user.email}
+                      {formatEstimateUserLabel(estimate)}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Status: {estimate.status.replace('_', ' ')} · Payment:{' '}
@@ -641,4 +639,11 @@ export function AdminCustomPlansDashboard({
       </div>
     </div>
   )
+}
+function formatEstimateUserLabel(estimate: CustomEstimate) {
+  if (!estimate.user) {
+    return 'Unknown customer'
+  }
+  const displayName = `${estimate.user.firstName ?? ''} ${estimate.user.lastName ?? ''}`.trim()
+  return estimate.user.name ?? displayName || estimate.user.email
 }
