@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 
 import { Button } from '@/components/Button'
 
-type DashboardAddress = {
+export type DashboardAddress = {
   id: string
   label?: string | null
   street: string
@@ -13,7 +13,7 @@ type DashboardAddress = {
   postalCode: string
 }
 
-type AdminUser = {
+export type AdminUser = {
   id: string
   email: string
   firstName?: string | null
@@ -32,7 +32,7 @@ type LineItem = {
   notes?: string
 }
 
-type CustomEstimate = {
+export type CustomEstimate = {
   id: string
   userId: string
   createdByEmail?: string | null
