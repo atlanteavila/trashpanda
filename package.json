@@ -1,11 +1,11 @@
 {
   "name": "tailwind-plus-salient",
   "version": "0.1.0",
+  "packageManager": "pnpm@10.28.0",
   "private": true,
   "scripts": {
     "predev": "prisma generate",
     "dev": "next dev",
-    "prebuild": "prisma generate",
     "build": "next build",
     "prestart": "prisma generate",
     "start": "next start",
@@ -41,5 +41,14 @@
     "prettier-plugin-tailwindcss": "^0.6.14",
     "prisma": "^5.22.0",
     "sharp": "^0.34.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
   }
 }
