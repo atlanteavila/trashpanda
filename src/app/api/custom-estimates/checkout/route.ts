@@ -83,6 +83,7 @@ export async function POST(request: Request) {
         quantity: 1,
         monthlyRate: Number(estimate.monthlyAdjustment),
         frequency: 'Monthly',
+        notes: undefined,
       })
     }
 
