@@ -90,6 +90,7 @@ export function AdminCustomPlansDashboard({
   users: AdminUser[]
   initialEstimates: CustomEstimate[]
 }) {
+  const [userList, setUserList] = useState<AdminUser[]>(users)
   const [selectedUserId, setSelectedUserId] = useState<string>('')
   const [selectedAddressIds, setSelectedAddressIds] = useState<string[]>([])
   const [lineItems, setLineItems] = useState<LineItem[]>([buildLineItem()])
@@ -100,10 +101,20 @@ export function AdminCustomPlansDashboard({
   const [statusNotice, setStatusNotice] = useState<string>('')
   const [estimates, setEstimates] = useState<CustomEstimate[]>(initialEstimates)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+  const [addressError, setAddressError] = useState('')
+  const [addressForm, setAddressForm] = useState({
+    label: '',
+    street: '',
+    city: '',
+    state: '',
+    postalCode: '',
+  })
+  const [isAddressSaving, setIsAddressSaving] = useState(false)
 
   const selectedUser = useMemo(
-    () => users.find((user) => user.id === selectedUserId) ?? null,
-    [users, selectedUserId],
+    () => userList.find((user) => user.id === selectedUserId) ?? null,
+    [userList, selectedUserId],
   )
 
   const selectedAddresses = useMemo(() => {
@@ -178,6 +189,84 @@ export function AdminCustomPlansDashboard({
     setPreferredServiceDay('')
     setNotes('')
     setAdminNotes('')
+  }
+
+  const resetAddressForm = () => {
+    setAddressForm({
+      label: '',
+      street: '',
+      city: '',
+      state: '',
+      postalCode: '',
+    })
+    setAddressError('')
+  }
+
+  const handleOpenAddressModal = () => {
+    if (!selectedUserId) {
+      setStatusNotice('Select a customer before adding an address.')
+      return
+    }
+    resetAddressForm()
+    setIsAddressModalOpen(true)
+  }
+
+  const handleSaveAddress = async () => {
+    if (!selectedUserId) {
+      setAddressError('Select a customer before adding an address.')
+      return
+    }
+
+    const payload = {
+      userId: selectedUserId,
+      label: addressForm.label.trim() || null,
+      street: addressForm.street.trim(),
+      city: addressForm.city.trim(),
+      state: addressForm.state.trim(),
+      postalCode: addressForm.postalCode.trim(),
+    }
+
+    if (!payload.street || !payload.city || !payload.state || !payload.postalCode) {
+      setAddressError('Complete every required address field.')
+      return
+    }
+
+    try {
+      setIsAddressSaving(true)
+      setAddressError('')
+      const response = await fetch('/api/admin/addresses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await response.json().catch(() => null)
+      if (!response.ok) {
+        setAddressError(
+          typeof data?.error === 'string' ? data.error : 'Unable to save address.',
+        )
+        return
+      }
+
+      if (data?.address) {
+        setUserList((prev) =>
+          prev.map((user) =>
+            user.id === selectedUserId
+              ? {
+                  ...user,
+                  addresses: [...user.addresses, data.address as DashboardAddress],
+                }
+              : user,
+          ),
+        )
+      }
+      setIsAddressModalOpen(false)
+    } catch (error) {
+      setAddressError(
+        error instanceof Error ? error.message : 'Unable to save address.',
+      )
+    } finally {
+      setIsAddressSaving(false)
+    }
   }
 
   const handleSubmit = async (nextStatus: 'DRAFT' | 'SENT') => {
@@ -314,7 +403,7 @@ export function AdminCustomPlansDashboard({
                 className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-500 dark:border-white/10 dark:bg-slate-900 dark:text-white"
               >
                 <option value="">Select a customer</option>
-                {users.map((user) => (
+                {userList.map((user) => (
                   <option key={user.id} value={user.id}>
                     {formatUserLabel(user)} ({user.email})
                   </option>
@@ -323,12 +412,19 @@ export function AdminCustomPlansDashboard({
             </label>
 
             <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                Service addresses
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Select all addresses that should be included on this plan.
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    Service addresses
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Select all addresses that should be included on this plan.
+                  </p>
+                </div>
+                <Button type="button" onClick={handleOpenAddressModal}>
+                  + Add address
+                </Button>
+              </div>
               <div className="mt-3 divide-y divide-gray-200 rounded-xl border border-gray-200 dark:divide-white/10 dark:border-white/10">
                 {selectedUser?.addresses.length ? (
                   selectedUser.addresses.map((address) => (
@@ -637,6 +733,92 @@ export function AdminCustomPlansDashboard({
           </div>
         </aside>
       </div>
+      {isAddressModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Add service address
+            </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Save a new address for this customer to use in the custom plan.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <label className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 sm:col-span-2">
+                Label
+                <input
+                  value={addressForm.label}
+                  onChange={(event) =>
+                    setAddressForm((prev) => ({ ...prev, label: event.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-white/10 dark:bg-slate-900 dark:text-white"
+                />
+              </label>
+              <label className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 sm:col-span-2">
+                Street address
+                <input
+                  value={addressForm.street}
+                  onChange={(event) =>
+                    setAddressForm((prev) => ({ ...prev, street: event.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-white/10 dark:bg-slate-900 dark:text-white"
+                />
+              </label>
+              <label className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
+                City
+                <input
+                  value={addressForm.city}
+                  onChange={(event) =>
+                    setAddressForm((prev) => ({ ...prev, city: event.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-white/10 dark:bg-slate-900 dark:text-white"
+                />
+              </label>
+              <label className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
+                State
+                <input
+                  value={addressForm.state}
+                  onChange={(event) =>
+                    setAddressForm((prev) => ({ ...prev, state: event.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-white/10 dark:bg-slate-900 dark:text-white"
+                />
+              </label>
+              <label className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 sm:col-span-2">
+                Postal code
+                <input
+                  value={addressForm.postalCode}
+                  onChange={(event) =>
+                    setAddressForm((prev) => ({ ...prev, postalCode: event.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-white/10 dark:bg-slate-900 dark:text-white"
+                />
+              </label>
+            </div>
+            {addressError ? (
+              <p className="mt-3 text-sm text-rose-600 dark:text-rose-400">
+                {addressError}
+              </p>
+            ) : null}
+            <div className="mt-5 flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsAddressModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                color="green"
+                disabled={isAddressSaving}
+                onClick={handleSaveAddress}
+              >
+                {isAddressSaving ? 'Saving…' : 'Save address'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

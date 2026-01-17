@@ -398,15 +398,6 @@ export function CustomPlansDashboard({
                     Select for checkout
                   </label>
                 ) : null}
-                {estimate.status === 'SENT' ? (
-                  <Button
-                    type="button"
-                    color="green"
-                    onClick={() => handleUpdateStatus(estimate.id, 'ACCEPTED')}
-                  >
-                    Agree to this plan
-                  </Button>
-                ) : null}
                 {estimate.status === 'ACTIVE' ? (
                   <Button
                     type="button"
