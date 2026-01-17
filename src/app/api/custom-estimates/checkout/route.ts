@@ -8,6 +8,13 @@ type CheckoutRequest = {
   estimateIds?: string[]
 }
 
+type Estimate = {
+  addresses: any[];
+  lineItems: any[];
+  monthlyAdjustment: number,
+  id: string | number;
+}
+
 function normalizeEstimateIds(value: unknown) {
   if (!Array.isArray(value)) {
     return []
@@ -55,7 +62,7 @@ export async function POST(request: Request) {
     )
   }
 
-  const lineItems = estimates.flatMap((estimate) => {
+  const lineItems = estimates.flatMap((estimate: Estimate) => {
     const addressSummary = Array.isArray(estimate.addresses)
       ? estimate.addresses
           .map((address: any) => address.label || address.street)
@@ -83,6 +90,7 @@ export async function POST(request: Request) {
         quantity: 1,
         monthlyRate: Number(estimate.monthlyAdjustment),
         frequency: 'Monthly',
+        notes: undefined,
       })
     }
 
@@ -90,7 +98,7 @@ export async function POST(request: Request) {
   })
 
   const filteredItems = lineItems.filter(
-    (item) =>
+    (item: any) =>
       Number.isFinite(item.quantity) &&
       Number(item.quantity) > 0 &&
       Number.isFinite(item.monthlyRate) &&
@@ -113,7 +121,7 @@ export async function POST(request: Request) {
       successUrl: `${baseUrl}/dash/custom-plans?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${baseUrl}/dash/custom-plans?checkout=cancelled&session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
-        estimateIds: estimates.map((estimate) => estimate.id).join(','),
+        estimateIds: estimates.map((estimate: Estimate) => estimate.id).join(','),
         userId: session.user.id,
       },
     })
