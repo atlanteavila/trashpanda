@@ -141,7 +141,7 @@ export default async function AdminCustomPlansPage() {
     }),
   ])
 
-  const normalizedEstimates: CustomEstimate[] = customEstimates.map((estimate) => ({
+  const normalizedEstimates: CustomEstimate[] = customEstimates.map((estimate: any ) => ({
     ...estimate,
     addresses: normalizeDashboardAddresses(estimate.addresses),
     lineItems: normalizeLineItems(estimate.lineItems, estimate.id),

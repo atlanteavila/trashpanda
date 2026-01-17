@@ -38,7 +38,7 @@ export default async function CustomPlansPage() {
 
   return (
     <CustomPlansDashboard
-      estimates={estimates.map((estimate) => ({
+      estimates={estimates.map((estimate: any) => ({
         ...estimate,
         addresses: Array.isArray(estimate.addresses) ? estimate.addresses : [],
         lineItems: Array.isArray(estimate.lineItems) ? estimate.lineItems : [],
