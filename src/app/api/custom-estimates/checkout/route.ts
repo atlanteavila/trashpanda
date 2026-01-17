@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client'
 import { NextResponse } from 'next/server'
 
 import { auth } from '@/lib/auth'
@@ -9,7 +8,7 @@ type CheckoutRequest = {
   estimateIds?: string[]
 }
 
-type CustomEstimateRecord = Prisma.CustomEstimateGetPayload<Record<string, never>>
+type CustomEstimateRecord = Awaited<ReturnType<typeof prisma.customEstimate.findMany>>[number]
 
 function normalizeEstimateIds(value: unknown) {
   if (!Array.isArray(value)) {
