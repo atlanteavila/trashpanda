@@ -184,7 +184,7 @@ export async function POST(request: Request) {
     },
   })
 
-  if (status === 'SENT' && estimate.user?.email) {
+  if (estimate.user?.email) {
     const reviewUrl = `${getSiteUrl()}/dash/custom-plans?estimate=${estimate.id}`
 
     try {
