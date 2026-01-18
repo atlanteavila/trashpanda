@@ -3,6 +3,7 @@ import { hash } from 'bcryptjs'
 import { NextResponse } from 'next/server'
 
 import prisma from '@/lib/prisma'
+import { sendSignupWelcomeEmail } from '@/lib/notificationEmails'
 import { US_STATES } from '@/lib/us-states'
 
 function getStringValue(value: FormDataEntryValue | null): string | null {
@@ -87,7 +88,7 @@ export async function POST(request: Request) {
 
     const hashedPassword = await hash(password, 12)
 
-    await prisma.user.create({
+    const newUser = await prisma.user.create({
       data: {
         email,
         firstName,
@@ -107,6 +108,16 @@ export async function POST(request: Request) {
         },
       },
     })
+
+    try {
+      await sendSignupWelcomeEmail({
+        to: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+      })
+    } catch (error) {
+      console.error('Failed to send signup welcome email', error)
+    }
 
     const redirectUrl = new URL('/login', request.url)
     redirectUrl.searchParams.set('registered', '1')

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 
 import { auth } from '@/lib/auth'
 import { isAdminUser } from '@/lib/admin'
+import { getSiteUrl } from '@/lib/email'
+import { sendCustomEstimateEmail } from '@/lib/notificationEmails'
 import prisma from '@/lib/prisma'
 
 type UpdatePayload = {
@@ -92,6 +94,28 @@ export async function PATCH(
       },
     },
   })
+
+  if (updates.status === 'SENT' && updated.user?.email) {
+    const reviewUrl = `${getSiteUrl()}/dash/custom-plans?estimate=${updated.id}`
+
+    try {
+      await sendCustomEstimateEmail({
+        to: updated.user.email,
+        firstName: updated.user.firstName,
+        lastName: updated.user.lastName,
+        estimateId: updated.id,
+        addresses: Array.isArray(updated.addresses) ? updated.addresses : [],
+        lineItems: Array.isArray(updated.lineItems) ? updated.lineItems : [],
+        monthlyAdjustment: updated.monthlyAdjustment ?? null,
+        total: Number(updated.total ?? 0),
+        preferredServiceDay: updated.preferredServiceDay ?? null,
+        notes: updated.notes ?? null,
+        reviewUrl,
+      })
+    } catch (error) {
+      console.error('Failed to send custom estimate email', error)
+    }
+  }
 
   return NextResponse.json({ estimate: updated })
 }
