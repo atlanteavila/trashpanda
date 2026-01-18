@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { isAdminUser } from '@/lib/admin'
 import { getSiteUrl } from '@/lib/email'
 import { sendCustomEstimateEmail } from '@/lib/notificationEmails'
+import type { CustomEstimateAddress } from '@/lib/notificationEmails'
 import prisma from '@/lib/prisma'
 
 type UpdatePayload = {
@@ -18,6 +19,26 @@ const allowedStatusUpdates = new Set([
   'PAUSED',
   'CANCELLED',
 ])
+
+const isCustomEstimateAddress = (value: unknown): value is CustomEstimateAddress => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const record = value as Record<string, unknown>
+
+  return (
+    typeof record.street === 'string' &&
+    typeof record.city === 'string' &&
+    typeof record.state === 'string' &&
+    typeof record.postalCode === 'string' &&
+    (record.label === undefined || record.label === null || typeof record.label === 'string') &&
+    (record.id === undefined || typeof record.id === 'string')
+  )
+}
+
+const getCustomEstimateAddresses = (value: unknown): CustomEstimateAddress[] =>
+  Array.isArray(value) ? value.filter(isCustomEstimateAddress) : []
 
 export async function PATCH(
   request: Request,
@@ -104,7 +125,7 @@ export async function PATCH(
         firstName: updated.user.firstName,
         lastName: updated.user.lastName,
         estimateId: updated.id,
-        addresses: Array.isArray(updated.addresses) ? updated.addresses : [],
+        addresses: getCustomEstimateAddresses(updated.addresses),
         lineItems: Array.isArray(updated.lineItems) ? updated.lineItems : [],
         monthlyAdjustment: updated.monthlyAdjustment ?? null,
         total: Number(updated.total ?? 0),
