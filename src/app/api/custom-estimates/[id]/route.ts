@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth'
 import { isAdminUser } from '@/lib/admin'
 import { getSiteUrl } from '@/lib/email'
 import { sendCustomEstimateEmail } from '@/lib/notificationEmails'
-import type { CustomEstimateAddress } from '@/lib/notificationEmails'
+import type { CustomEstimateAddress, CustomEstimateLineItem } from '@/lib/notificationEmails'
 import prisma from '@/lib/prisma'
 
 type UpdatePayload = {
@@ -39,6 +39,27 @@ const isCustomEstimateAddress = (value: unknown): value is CustomEstimateAddress
 
 const getCustomEstimateAddresses = (value: unknown): CustomEstimateAddress[] =>
   Array.isArray(value) ? value.filter(isCustomEstimateAddress) : []
+
+const isCustomEstimateLineItem = (value: unknown): value is CustomEstimateLineItem => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const record = value as Record<string, unknown>
+
+  return (
+    typeof record.description === 'string' &&
+    (record.frequency === undefined || record.frequency === null || typeof record.frequency === 'string') &&
+    (record.quantity === undefined || record.quantity === null || typeof record.quantity === 'number') &&
+    (record.monthlyRate === undefined || record.monthlyRate === null || typeof record.monthlyRate === 'number') &&
+    (record.lineTotal === undefined || record.lineTotal === null || typeof record.lineTotal === 'number') &&
+    (record.notes === undefined || record.notes === null || typeof record.notes === 'string') &&
+    (record.id === undefined || typeof record.id === 'string')
+  )
+}
+
+const getCustomEstimateLineItems = (value: unknown): CustomEstimateLineItem[] =>
+  Array.isArray(value) ? value.filter(isCustomEstimateLineItem) : []
 
 export async function PATCH(
   request: Request,
@@ -126,7 +147,7 @@ export async function PATCH(
         lastName: updated.user.lastName,
         estimateId: updated.id,
         addresses: getCustomEstimateAddresses(updated.addresses),
-        lineItems: Array.isArray(updated.lineItems) ? updated.lineItems : [],
+        lineItems: getCustomEstimateLineItems(updated.lineItems),
         monthlyAdjustment: updated.monthlyAdjustment ?? null,
         total: Number(updated.total ?? 0),
         preferredServiceDay: updated.preferredServiceDay ?? null,

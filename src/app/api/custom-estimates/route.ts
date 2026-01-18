@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { isAdminUser } from '@/lib/admin'
 import { getSiteUrl } from '@/lib/email'
 import { sendCustomEstimateEmail } from '@/lib/notificationEmails'
+import type { CustomEstimateAddress, CustomEstimateLineItem } from '@/lib/notificationEmails'
 import prisma from '@/lib/prisma'
 
 type AddressPayload = {
@@ -34,6 +35,47 @@ type CustomEstimatePayload = {
   preferredServiceDay?: string | null
   status?: 'DRAFT' | 'SENT'
 }
+
+const isCustomEstimateAddress = (value: unknown): value is CustomEstimateAddress => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const record = value as Record<string, unknown>
+
+  return (
+    typeof record.street === 'string' &&
+    typeof record.city === 'string' &&
+    typeof record.state === 'string' &&
+    typeof record.postalCode === 'string' &&
+    (record.label === undefined || record.label === null || typeof record.label === 'string') &&
+    (record.id === undefined || typeof record.id === 'string')
+  )
+}
+
+const getCustomEstimateAddresses = (value: unknown): CustomEstimateAddress[] =>
+  Array.isArray(value) ? value.filter(isCustomEstimateAddress) : []
+
+const isCustomEstimateLineItem = (value: unknown): value is CustomEstimateLineItem => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const record = value as Record<string, unknown>
+
+  return (
+    typeof record.description === 'string' &&
+    (record.frequency === undefined || record.frequency === null || typeof record.frequency === 'string') &&
+    (record.quantity === undefined || record.quantity === null || typeof record.quantity === 'number') &&
+    (record.monthlyRate === undefined || record.monthlyRate === null || typeof record.monthlyRate === 'number') &&
+    (record.lineTotal === undefined || record.lineTotal === null || typeof record.lineTotal === 'number') &&
+    (record.notes === undefined || record.notes === null || typeof record.notes === 'string') &&
+    (record.id === undefined || typeof record.id === 'string')
+  )
+}
+
+const getCustomEstimateLineItems = (value: unknown): CustomEstimateLineItem[] =>
+  Array.isArray(value) ? value.filter(isCustomEstimateLineItem) : []
 
 function normalizeLineItems(items: LineItemPayload[] | undefined) {
   if (!Array.isArray(items)) {
@@ -193,8 +235,8 @@ export async function POST(request: Request) {
         firstName: estimate.user.firstName,
         lastName: estimate.user.lastName,
         estimateId: estimate.id,
-        addresses: Array.isArray(estimate.addresses) ? estimate.addresses : [],
-        lineItems: Array.isArray(estimate.lineItems) ? estimate.lineItems : [],
+        addresses: getCustomEstimateAddresses(estimate.addresses),
+        lineItems: getCustomEstimateLineItems(estimate.lineItems),
         monthlyAdjustment: estimate.monthlyAdjustment ?? null,
         total: Number(estimate.total ?? 0),
         preferredServiceDay: estimate.preferredServiceDay ?? null,
