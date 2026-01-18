@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
 
+import { getEmailTransporter, getFromAddress } from '@/lib/email'
 type ContactRequestBody = {
   firstName?: string
   lastName?: string
@@ -10,29 +10,6 @@ type ContactRequestBody = {
   message?: string
   serviceFrequency?: string
 }
-
-const transporterPromise = (async () => {
-  const host = process.env.SMTP_HOST
-  const port = Number.parseInt(process.env.SMTP_PORT ?? '', 10)
-  const user = process.env.SMTP_USER
-  const pass = process.env.SMTP_PASS
-
-  if (!host || Number.isNaN(port) || !user || !pass) {
-    throw new Error(
-      'SMTP configuration is incomplete. Please set SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS.',
-    )
-  }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: {
-      user,
-      pass,
-    },
-  })
-})()
 
 const serviceFrequencyLabels: Record<string, string> = {
   weekly: 'Weekly roll-out and return',
@@ -73,7 +50,7 @@ export async function POST(request: Request) {
 
   const frequencyLabel = serviceFrequencyLabels[serviceFrequency] ?? 'Not specified'
 
-  const fromAddress = sanitize(process.env.SMTP_FROM) || process.env.SMTP_USER || ''
+  const fromAddress = sanitize(getFromAddress())
   const recipient = sanitize(process.env.CONTACT_RECIPIENT) || process.env.SMTP_USER || ''
 
   if (!fromAddress || !recipient) {
@@ -99,10 +76,10 @@ export async function POST(request: Request) {
   `
 
   try {
-    const transporter = await transporterPromise
+    const transporter = await getEmailTransporter()
 
     await transporter.sendMail({
-      from: `Trash Panda Website <${fromAddress}>`,
+      from: fromAddress,
       to: recipient,
       replyTo: email,
       subject: `New contact request from ${firstName} ${lastName}`,
