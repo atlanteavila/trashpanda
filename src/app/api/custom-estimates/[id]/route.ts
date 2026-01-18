@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { isAdminUser } from '@/lib/admin'
 import { getSiteUrl } from '@/lib/email'
 import { sendCustomEstimateEmail } from '@/lib/notificationEmails'
+import type { CustomEstimateAddress, CustomEstimateLineItem } from '@/lib/notificationEmails'
 import prisma from '@/lib/prisma'
 
 type UpdatePayload = {
@@ -18,6 +19,47 @@ const allowedStatusUpdates = new Set([
   'PAUSED',
   'CANCELLED',
 ])
+
+const isCustomEstimateAddress = (value: unknown): value is CustomEstimateAddress => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const record = value as Record<string, unknown>
+
+  return (
+    typeof record.street === 'string' &&
+    typeof record.city === 'string' &&
+    typeof record.state === 'string' &&
+    typeof record.postalCode === 'string' &&
+    (record.label === undefined || record.label === null || typeof record.label === 'string') &&
+    (record.id === undefined || typeof record.id === 'string')
+  )
+}
+
+const getCustomEstimateAddresses = (value: unknown): CustomEstimateAddress[] =>
+  Array.isArray(value) ? value.filter(isCustomEstimateAddress) : []
+
+const isCustomEstimateLineItem = (value: unknown): value is CustomEstimateLineItem => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const record = value as Record<string, unknown>
+
+  return (
+    typeof record.description === 'string' &&
+    (record.frequency === undefined || record.frequency === null || typeof record.frequency === 'string') &&
+    (record.quantity === undefined || record.quantity === null || typeof record.quantity === 'number') &&
+    (record.monthlyRate === undefined || record.monthlyRate === null || typeof record.monthlyRate === 'number') &&
+    (record.lineTotal === undefined || record.lineTotal === null || typeof record.lineTotal === 'number') &&
+    (record.notes === undefined || record.notes === null || typeof record.notes === 'string') &&
+    (record.id === undefined || typeof record.id === 'string')
+  )
+}
+
+const getCustomEstimateLineItems = (value: unknown): CustomEstimateLineItem[] =>
+  Array.isArray(value) ? value.filter(isCustomEstimateLineItem) : []
 
 export async function PATCH(
   request: Request,
@@ -104,8 +146,8 @@ export async function PATCH(
         firstName: updated.user.firstName,
         lastName: updated.user.lastName,
         estimateId: updated.id,
-        addresses: Array.isArray(updated.addresses) ? updated.addresses : [],
-        lineItems: Array.isArray(updated.lineItems) ? updated.lineItems : [],
+        addresses: getCustomEstimateAddresses(updated.addresses),
+        lineItems: getCustomEstimateLineItems(updated.lineItems),
         monthlyAdjustment: updated.monthlyAdjustment ?? null,
         total: Number(updated.total ?? 0),
         preferredServiceDay: updated.preferredServiceDay ?? null,
