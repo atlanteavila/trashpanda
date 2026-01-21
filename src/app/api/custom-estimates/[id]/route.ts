@@ -8,7 +8,7 @@ import type { CustomEstimateAddress, CustomEstimateLineItem } from '@/lib/notifi
 import prisma from '@/lib/prisma'
 
 type UpdatePayload = {
-  status?: 'SENT' | 'ACCEPTED' | 'ACTIVE' | 'PAUSED' | 'CANCELLED'
+  status?: 'SENT' | 'ACCEPTED' | 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'DELETE'
   paymentStatus?: 'PAID_ON_FILE'
 }
 
@@ -18,6 +18,7 @@ const allowedStatusUpdates = new Set([
   'ACTIVE',
   'PAUSED',
   'CANCELLED',
+  'DELETE',
 ])
 
 const isCustomEstimateAddress = (value: unknown): value is CustomEstimateAddress => {
@@ -103,7 +104,7 @@ export async function PATCH(
   if (payload.status && allowedStatusUpdates.has(payload.status)) {
     const nextStatus = payload.status
 
-    if (!isAdmin && nextStatus !== 'ACCEPTED' && nextStatus !== 'PAUSED' && nextStatus !== 'CANCELLED') {
+    if (!isAdmin && nextStatus !== 'ACCEPTED' && nextStatus !== 'PAUSED' && nextStatus !== 'CANCELLED' && nextStatus !== 'DELETE') {
       return NextResponse.json({ error: 'Only admins can set that status.' }, { status: 403 })
     }
 
@@ -160,4 +161,61 @@ export async function PATCH(
   }
 
   return NextResponse.json({ estimate: updated })
+}
+
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const session = await auth()
+
+  // 1️⃣ Authentication
+  if (!session?.user) {
+    return NextResponse.json(
+      { error: 'You must be signed in to delete an estimate.' },
+      { status: 401 },
+    )
+  }
+
+  // 2️⃣ Authorization — ADMIN ONLY
+  if (!isAdminUser(session.user)) {
+    return NextResponse.json(
+      { error: 'Only administrators can delete estimates.' },
+      { status: 403 },
+    )
+  }
+
+  const params = await context.params
+  const estimateId = params?.id?.trim()
+
+  // 3️⃣ Validate ID
+  if (!estimateId) {
+    return NextResponse.json(
+      { error: 'Estimate id is required.' },
+      { status: 400 },
+    )
+  }
+
+  // 4️⃣ Ensure estimate exists (clean 404 instead of Prisma throw)
+  const estimate = await prisma.customEstimate.findUnique({
+    where: { id: estimateId },
+    select: { id: true },
+  })
+
+  if (!estimate) {
+    return NextResponse.json(
+      { error: 'Estimate not found.' },
+      { status: 404 },
+    )
+  }
+
+  // 5️⃣ Hard delete
+  await prisma.customEstimate.delete({
+    where: { id: estimateId },
+  })
+
+  return NextResponse.json({
+    estimate: estimateId,
+    message: 'Estimate has been permanently deleted',
+  })
 }
