@@ -168,9 +168,7 @@ export function CustomPlansDashboard({
 
   const handleToggleSelection = (estimateId: string) => {
     setSelectedIds((prev) =>
-      prev.includes(estimateId)
-        ? prev.filter((id) => id !== estimateId)
-        : [...prev, estimateId],
+      prev.includes(estimateId) ? [] : [estimateId],
     )
   }
 
@@ -259,8 +257,7 @@ export function CustomPlansDashboard({
                 Checkout custom plans
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Select one or more plans to pay together, or checkout
-                individually below.
+                Select a plan to pay for it, or checkout individually below.
               </p>
             </div>
             <Button

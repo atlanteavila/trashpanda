@@ -101,6 +101,7 @@ export function AdminCustomPlansDashboard({
   const [statusNotice, setStatusNotice] = useState<string>('')
   const [estimates, setEstimates] = useState<CustomEstimate[]>(initialEstimates)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [editingEstimateId, setEditingEstimateId] = useState<string | null>(null)
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [addressError, setAddressError] = useState('')
   const [addressForm, setAddressForm] = useState({
@@ -189,6 +190,7 @@ export function AdminCustomPlansDashboard({
     setPreferredServiceDay('')
     setNotes('')
     setAdminNotes('')
+    setEditingEstimateId(null)
   }
 
   const resetAddressForm = () => {
@@ -329,11 +331,103 @@ export function AdminCustomPlansDashboard({
     }
   }
 
+  const handleEditEstimate = (estimate: CustomEstimate) => {
+    setSelectedUserId(estimate.userId)
+    setSelectedAddressIds(estimate.addresses.map((address) => address.id))
+    setLineItems(
+      estimate.lineItems.map((item) => ({
+        id: item.id,
+        description: item.description,
+        frequency: item.frequency,
+        quantity: item.quantity,
+        monthlyRate: item.monthlyRate,
+        notes: item.notes ?? '',
+      })),
+    )
+    setMonthlyAdjustment(estimate.monthlyAdjustment ?? 0)
+    setPreferredServiceDay(estimate.preferredServiceDay ?? '')
+    setNotes(estimate.notes ?? '')
+    setAdminNotes(estimate.adminNotes ?? '')
+    setEditingEstimateId(estimate.id)
+    setStatusNotice('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleUpdateEstimate = async () => {
+    if (!editingEstimateId) {
+      return
+    }
+    if (!selectedUserId) {
+      setStatusNotice('Select a customer before saving.')
+      return
+    }
+    if (selectedAddressIds.length === 0) {
+      setStatusNotice('Select at least one service address.')
+      return
+    }
+    if (normalizedLineItems.every((item) => !item.description.trim())) {
+      setStatusNotice('Add at least one line item with a description.')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      setStatusNotice('')
+      const response = await fetch(`/api/custom-estimates/${editingEstimateId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          addresses: selectedAddresses,
+          lineItems: normalizedLineItems,
+          monthlyAdjustment,
+          preferredServiceDay,
+          notes,
+          adminNotes,
+        }),
+      })
+
+      const data = await response.json().catch(() => null)
+      if (!response.ok) {
+        setStatusNotice(
+          typeof data?.error === 'string'
+            ? data.error
+            : 'Unable to update the custom plan.',
+        )
+        return
+      }
+
+      if (data?.estimate) {
+        setEstimates((prev) =>
+          prev.map((estimate) =>
+            estimate.id === editingEstimateId ? (data.estimate as CustomEstimate) : estimate,
+          ),
+        )
+      }
+      setStatusNotice('Estimate updated.')
+      resetForm()
+    } catch (error) {
+      setStatusNotice(
+        error instanceof Error ? error.message : 'Unable to update the custom plan.',
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const handleStatusUpdate = async (
     estimateId: string,
     nextStatus: 'SENT' | 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'DELETE',
   ) => {
     const isDelete = nextStatus === 'DELETE'
+
+    if (isDelete) {
+      const confirmed = window.confirm(
+        'Delete this custom plan? This will cancel any active Stripe subscription and permanently remove the estimate.',
+      )
+      if (!confirmed) {
+        return
+      }
+    }
   
     const response = await fetch(`/api/custom-estimates/${estimateId}`, {
       method: isDelete ? 'DELETE' : 'PATCH',
@@ -409,6 +503,12 @@ export function AdminCustomPlansDashboard({
               Choose a customer, select addresses, and itemize recurring work.
             </p>
           </div>
+          {editingEstimateId ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+              Editing an existing estimate. Updates will sync pricing to Stripe
+              if the plan is active.
+            </div>
+          ) : null}
 
           <div className="grid gap-6">
             <label className="text-sm font-medium text-gray-900 dark:text-white">
@@ -419,6 +519,7 @@ export function AdminCustomPlansDashboard({
                   setSelectedUserId(event.target.value)
                   setSelectedAddressIds([])
                 }}
+                disabled={Boolean(editingEstimateId)}
                 className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-500 dark:border-white/10 dark:bg-slate-900 dark:text-white"
               >
                 <option value="">Select a customer</option>
@@ -648,21 +749,43 @@ export function AdminCustomPlansDashboard({
           ) : null}
 
           <div className="flex flex-wrap gap-3">
-            <Button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleSubmit('DRAFT')}
-            >
-              Save draft
-            </Button>
-            <Button
-              type="button"
-              color="green"
-              disabled={isSubmitting}
-              onClick={() => handleSubmit('SENT')}
-            >
-              Save & mark sent
-            </Button>
+            {editingEstimateId ? (
+              <>
+                <Button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={handleUpdateEstimate}
+                >
+                  Update estimate
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isSubmitting}
+                  onClick={resetForm}
+                >
+                  Cancel edit
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={() => handleSubmit('DRAFT')}
+                >
+                  Save draft
+                </Button>
+                <Button
+                  type="button"
+                  color="green"
+                  disabled={isSubmitting}
+                  onClick={() => handleSubmit('SENT')}
+                >
+                  Save & mark sent
+                </Button>
+              </>
+            )}
           </div>
         </section>
 
@@ -716,6 +839,13 @@ export function AdminCustomPlansDashboard({
                       {formatMoney(estimate.total)} / month
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleEditEstimate(estimate)}
+                        className="rounded-full border border-green-200 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-100 dark:border-green/10 dark:text-green-200 dark:hover:bg-green-800"
+                      >
+                        Edit
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleStatusUpdate(estimate.id, 'DELETE')}

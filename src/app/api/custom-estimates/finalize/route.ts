@@ -50,6 +50,8 @@ export async function POST(request: Request) {
   try {
     const stripeSession = await retrieveStripeCheckoutSession(sessionId)
     const estimateIds = normalizeEstimateIds(stripeSession.metadata?.estimateIds)
+    const stripeSubscriptionId =
+      typeof stripeSession.subscription === 'string' ? stripeSession.subscription : null
 
     if (estimateIds.length === 0) {
       return NextResponse.json({ error: 'No estimate metadata found.' }, { status: 400 })
@@ -64,6 +66,7 @@ export async function POST(request: Request) {
         paymentStatus: 'PAID',
         paidAt: new Date(),
         status: 'ACTIVE',
+        stripeSubscriptionId,
       },
     })
 

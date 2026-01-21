@@ -38,6 +38,12 @@ export async function POST(request: Request) {
   if (estimateIds.length === 0) {
     return NextResponse.json({ error: 'Select at least one plan to checkout.' }, { status: 400 })
   }
+  if (estimateIds.length > 1) {
+    return NextResponse.json(
+      { error: 'Checkout supports one custom plan at a time.' },
+      { status: 400 },
+    )
+  }
 
   const estimates = await prisma.customEstimate.findMany({
     where: {
