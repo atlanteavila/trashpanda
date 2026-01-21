@@ -165,6 +165,7 @@ model CustomEstimate {
   monthlyAdjustment    Float?
   subtotal             Float
   total                Float
+  stripeSubscriptionId String?
   notes                String?
   adminNotes           String?
   acceptedAt           DateTime?

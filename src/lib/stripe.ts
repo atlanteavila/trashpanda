@@ -299,6 +299,34 @@ export async function updateStripeSubscriptionItems(
   }
 }
 
+export interface StripeSubscriptionCancelResult {
+  status: string | null
+}
+
+export async function cancelStripeSubscription(
+  subscriptionId: string,
+): Promise<StripeSubscriptionCancelResult> {
+  const secretKey = getStripeSecretKey()
+
+  const response = await fetch(`${STRIPE_API_BASE}/subscriptions/${subscriptionId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+    },
+  })
+
+  const data = (await response.json()) as {
+    status?: string | null
+    error?: { message?: string }
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error?.message ?? 'Stripe returned an error response.')
+  }
+
+  return { status: data.status ?? null }
+}
+
 function normalizeBaseUrl(value: string) {
   return value.replace(/\/?$/, '')
 }
