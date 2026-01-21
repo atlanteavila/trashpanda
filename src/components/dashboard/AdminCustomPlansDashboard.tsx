@@ -331,22 +331,41 @@ export function AdminCustomPlansDashboard({
 
   const handleStatusUpdate = async (
     estimateId: string,
-    nextStatus: 'SENT' | 'ACTIVE' | 'PAUSED' | 'CANCELLED',
+    nextStatus: 'SENT' | 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'DELETE',
   ) => {
+    const isDelete = nextStatus === 'DELETE'
+  
     const response = await fetch(`/api/custom-estimates/${estimateId}`, {
-      method: 'PATCH',
+      method: isDelete ? 'DELETE' : 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: nextStatus }),
+      // Do NOT send a body for DELETE
+      body: isDelete ? undefined : JSON.stringify({ status: nextStatus }),
     })
+  
     const data = await response.json().catch(() => null)
-    if (response.ok && data?.estimate) {
+  
+    if (!response.ok) {
+      console.error(data?.error ?? 'Failed to update estimate')
+      return
+    }
+  
+    // PATCH returns updated estimate
+    if (!isDelete && data?.estimate) {
       setEstimates((prev) =>
         prev.map((estimate) =>
           estimate.id === estimateId ? data.estimate : estimate,
         ),
       )
     }
+  
+    // DELETE removes it from state
+    if (isDelete) {
+      setEstimates((prev) =>
+        prev.filter((estimate) => estimate.id !== estimateId),
+      )
+    }
   }
+  
 
   const handleRecordPayment = async (estimateId: string) => {
     const response = await fetch(`/api/custom-estimates/${estimateId}`, {
@@ -697,6 +716,13 @@ export function AdminCustomPlansDashboard({
                       {formatMoney(estimate.total)} / month
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleStatusUpdate(estimate.id, 'DELETE')}
+                        className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 dark:border-red/10 dark:text-red-200 dark:hover:bg-red-800"
+                      >
+                        DELETE
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleStatusUpdate(estimate.id, 'SENT')}
