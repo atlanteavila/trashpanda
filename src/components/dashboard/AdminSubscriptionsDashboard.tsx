@@ -8,6 +8,8 @@ import {
   type DashboardAddress,
   type SubscriptionSnapshot,
 } from '@/components/dashboard/DashboardShell'
+import Link from 'next/link'
+import { LinkIcon } from '@heroicons/react/20/solid'
 
 export type AdminSubscriptionRecord = {
   subscription: SubscriptionSnapshot
@@ -79,7 +81,10 @@ function matchesQuery(record: AdminSubscriptionRecord, query: string) {
   return haystack.includes(query)
 }
 
-function matchesCustomPlanQuery(record: AdminCustomPlanSubscriptionRecord, query: string) {
+function matchesCustomPlanQuery(
+  record: AdminCustomPlanSubscriptionRecord,
+  query: string,
+) {
   if (!query) return true
 
   const primaryAddress = record.estimate.addresses[0]
@@ -153,6 +158,16 @@ export function AdminSubscriptionsDashboard({
             Search, inspect, and edit customer subscriptions. Use the editor
             below to adjust services and addresses.
           </p>
+          <p className="mt-2 max-w-2xl text-sm text-gray-600 dark:text-gray-400">
+            Pinehurst interactive trash pick up{' '}
+            <Link
+              className="text-white font-medium hover:underline inline-flex items-center"
+              href="https://village-of-pinehurst.hub.arcgis.com/apps/28e744ec7e0c4c07a6fc2bc8c0733cd9/explore"
+              target="_blank"
+            >
+              map here <LinkIcon className="h-4 w-4 ml-1 text-white nline" />
+            </Link>
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <Button href="/dash/admin/custom-plans" className="rounded-full">
@@ -209,16 +224,17 @@ export function AdminSubscriptionsDashboard({
                     {record.user.email}
                   </p>
                   <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    Status: {record.estimate.status.replace('_', ' ')} · Payment:{' '}
-                    {record.estimate.paymentStatus.replace('_', ' ')}
+                    Status: {record.estimate.status.replace('_', ' ')} ·
+                    Payment: {record.estimate.paymentStatus.replace('_', ' ')}
                   </p>
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Service day: {formatServiceDay(record.estimate.preferredServiceDay)}
+                    Service day:{' '}
+                    {formatServiceDay(record.estimate.preferredServiceDay)}
                   </p>
                   {address ? (
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {address.label ?? 'Service address'} - {address.street}, {address.city},{' '}
-                      {address.state} {address.postalCode}
+                      {address.label ?? 'Service address'} - {address.street},{' '}
+                      {address.city}, {address.state} {address.postalCode}
                     </p>
                   ) : null}
                   <div className="mt-3 flex items-center justify-between gap-3">
@@ -248,115 +264,117 @@ export function AdminSubscriptionsDashboard({
             Standard subscriptions remain editable below.
           </p>
         </div>
-      <div className="grid gap-3 lg:grid-cols-4">
-        <div className="space-y-3 lg:col-span-1">
-          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-            <span>Results</span>
-            <span className="font-semibold text-gray-900 dark:text-white">
-              {filteredSubscriptions.length} subscriptions
-            </span>
+        <div className="grid gap-3 lg:grid-cols-4">
+          <div className="space-y-3 lg:col-span-1">
+            <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+              <span>Results</span>
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {filteredSubscriptions.length} subscriptions
+              </span>
+            </div>
+            <div className="divide-y divide-gray-200 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:divide-white/5 dark:border-white/10 dark:bg-slate-900">
+              {filteredSubscriptions.length === 0 ? (
+                <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                  No subscriptions match your search.
+                </div>
+              ) : (
+                filteredSubscriptions.map((record) => {
+                  const userLabel = buildUserLabel(record.user)
+                  const summary = buildSubscriptionSummary(record)
+                  const isSelected = selectedId === record.subscription.id
+
+                  return (
+                    <article
+                      key={record.subscription.id}
+                      className={`flex items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-gray-50 dark:hover:bg-slate-800 ${
+                        isSelected
+                          ? 'border-l-2 border-l-green-500 bg-green-50 dark:border-l-green-400 dark:bg-slate-800'
+                          : ''
+                      }`}
+                    >
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {userLabel}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {record.user.email}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {summary.title}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {summary.address}
+                        </span>
+                      </div>
+                      <Button
+                        onClick={() => setSelectedId(record.subscription.id)}
+                        className="rounded-full"
+                      >
+                        {isSelected ? 'Editing' : 'Edit'}
+                      </Button>
+                    </article>
+                  )
+                })
+              )}
+            </div>
           </div>
-          <div className="divide-y divide-gray-200 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:divide-white/5 dark:border-white/10 dark:bg-slate-900">
-            {filteredSubscriptions.length === 0 ? (
-              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                No subscriptions match your search.
+
+          <div className="lg:col-span-3">
+            {selectedRecord ? (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-green-700 dark:text-green-300">
+                    Editing
+                  </p>
+                  <h2 className="flex text-2xl font-semibold text-gray-900 dark:text-white">
+                    <span className="grow">
+                      {buildUserLabel(selectedRecord.user)}
+                    </span>
+                    {selectedRecord ? (
+                      <Button
+                        onClick={() => setSelectedId(null)}
+                        className="rounded-full"
+                      >
+                        x close
+                      </Button>
+                    ) : null}
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Update services, addresses, and preferences. Saving changes
+                    will trigger a fresh confirmation email to the customer.
+                  </p>
+                </div>
+                <DashboardShell
+                  key={selectedRecord.subscription.id}
+                  mode="edit"
+                  embedded
+                  user={{
+                    id: selectedRecord.user.id,
+                    email: selectedRecord.user.email,
+                    name: buildUserLabel(selectedRecord.user),
+                    firstName: selectedRecord.user.firstName ?? '',
+                    lastName: selectedRecord.user.lastName ?? '',
+                    phone: selectedRecord.user.phone ?? undefined,
+                  }}
+                  initialAddresses={selectedRecord.user.addresses}
+                  subscriptions={[selectedRecord.subscription]}
+                />
               </div>
             ) : (
-              filteredSubscriptions.map((record) => {
-                const userLabel = buildUserLabel(record.user)
-                const summary = buildSubscriptionSummary(record)
-                const isSelected = selectedId === record.subscription.id
-
-                return (
-                  <article
-                    key={record.subscription.id}
-                    className={`flex items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-gray-50 dark:hover:bg-slate-800 ${
-                      isSelected
-                        ? 'border-l-2 border-l-green-500 bg-green-50 dark:border-l-green-400 dark:bg-slate-800'
-                        : ''
-                    }`}
-                  >
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {userLabel}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {record.user.email}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {summary.title}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {summary.address}
-                      </span>
-                    </div>
-                    <Button
-                      onClick={() => setSelectedId(record.subscription.id)}
-                      className="rounded-full"
-                    >
-                      {isSelected ? 'Editing' : 'Edit'}
-                    </Button>
-                  </article>
-                )
-              })
+              <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-8 py-16 text-center text-gray-600 dark:border-white/10 dark:bg-slate-900 dark:text-gray-300">
+                <p className="text-lg font-semibold">
+                  Select a subscription to start editing
+                </p>
+                <p className="mt-2 max-w-xl text-sm">
+                  Use the search and list on the left to find a customer
+                  subscription. You can update services, add or remove add-ons,
+                  change addresses, and send the refreshed summary email after
+                  saving.
+                </p>
+              </div>
             )}
           </div>
         </div>
-
-        <div className="lg:col-span-3">
-          {selectedRecord ? (
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-semibold text-green-700 dark:text-green-300">
-                  Editing
-                </p>
-                <h2 className="flex text-2xl font-semibold text-gray-900 dark:text-white">
-                  <span className='grow'>{buildUserLabel(selectedRecord.user)}</span>
-                  {selectedRecord ? (
-                    <Button
-                      onClick={() => setSelectedId(null)}
-                      className="rounded-full"
-                    >
-                      x close
-                    </Button>
-                  ) : null}
-                </h2>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  Update services, addresses, and preferences. Saving changes
-                  will trigger a fresh confirmation email to the customer.
-                </p>
-              </div>
-              <DashboardShell
-                key={selectedRecord.subscription.id}
-                mode="edit"
-                embedded
-                user={{
-                  id: selectedRecord.user.id,
-                  email: selectedRecord.user.email,
-                  name: buildUserLabel(selectedRecord.user),
-                  firstName: selectedRecord.user.firstName ?? '',
-                  lastName: selectedRecord.user.lastName ?? '',
-                  phone: selectedRecord.user.phone ?? undefined,
-                }}
-                initialAddresses={selectedRecord.user.addresses}
-                subscriptions={[selectedRecord.subscription]}
-              />
-            </div>
-          ) : (
-            <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-8 py-16 text-center text-gray-600 dark:border-white/10 dark:bg-slate-900 dark:text-gray-300">
-              <p className="text-lg font-semibold">
-                Select a subscription to start editing
-              </p>
-              <p className="mt-2 max-w-xl text-sm">
-                Use the search and list on the left to find a customer
-                subscription. You can update services, add or remove add-ons,
-                change addresses, and send the refreshed summary email after
-                saving.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
       </section>
     </div>
   )
