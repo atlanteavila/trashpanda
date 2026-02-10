@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/Button'
 
@@ -86,9 +86,11 @@ function buildLineItem(): LineItem {
 export function AdminCustomPlansDashboard({
   users,
   initialEstimates,
+  initialEditingEstimateId,
 }: {
   users: AdminUser[]
   initialEstimates: CustomEstimate[]
+  initialEditingEstimateId?: string | null
 }) {
   const [userList, setUserList] = useState<AdminUser[]>(users)
   const [selectedUserId, setSelectedUserId] = useState<string>('')
@@ -98,6 +100,8 @@ export function AdminCustomPlansDashboard({
   const [preferredServiceDay, setPreferredServiceDay] = useState<string>('')
   const [notes, setNotes] = useState<string>('')
   const [adminNotes, setAdminNotes] = useState<string>('')
+  const [editingEstimateId, setEditingEstimateId] = useState<string | null>(null)
+  const [hasAppliedInitialEdit, setHasAppliedInitialEdit] = useState(false)
   const [statusNotice, setStatusNotice] = useState<string>('')
   const [estimates, setEstimates] = useState<CustomEstimate[]>(initialEstimates)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -189,7 +193,72 @@ export function AdminCustomPlansDashboard({
     setPreferredServiceDay('')
     setNotes('')
     setAdminNotes('')
+    setEditingEstimateId(null)
   }
+
+  const handleEditEstimate = useCallback((estimate: CustomEstimate) => {
+    setUserList((prev) =>
+      prev.map((user) => {
+        if (user.id !== estimate.userId) {
+          return user
+        }
+
+        const existingAddressIds = new Set(user.addresses.map((address) => address.id))
+        const missingAddresses = estimate.addresses.filter(
+          (address) => !existingAddressIds.has(address.id),
+        )
+
+        if (missingAddresses.length === 0) {
+          return user
+        }
+
+        return {
+          ...user,
+          addresses: [...user.addresses, ...missingAddresses],
+        }
+      }),
+    )
+    setSelectedUserId(estimate.userId)
+    setSelectedAddressIds(estimate.addresses.map((address) => address.id))
+    setLineItems(
+      estimate.lineItems.length > 0
+        ? estimate.lineItems.map((item, index) => ({
+            id: item.id || `${estimate.id}-item-${index + 1}`,
+            description: item.description ?? '',
+            frequency: item.frequency ?? 'Monthly',
+            quantity: Number.isFinite(item.quantity) ? Number(item.quantity) : 1,
+            monthlyRate: Number.isFinite(item.monthlyRate) ? Number(item.monthlyRate) : 0,
+            notes: item.notes ?? '',
+          }))
+        : [buildLineItem()],
+    )
+    setMonthlyAdjustment(estimate.monthlyAdjustment ?? 0)
+    setPreferredServiceDay(estimate.preferredServiceDay ?? '')
+    setNotes(estimate.notes ?? '')
+    setAdminNotes(estimate.adminNotes ?? '')
+    setEditingEstimateId(estimate.id)
+    setStatusNotice(`Editing custom plan for ${formatEstimateUserLabel(estimate)}.`)
+  }, [])
+
+  useEffect(() => {
+    if (!initialEditingEstimateId || hasAppliedInitialEdit) {
+      return
+    }
+
+    const estimate = estimates.find((item) => item.id === initialEditingEstimateId)
+    if (estimate) {
+      handleEditEstimate(estimate)
+    } else {
+      setStatusNotice('Unable to find that custom plan to edit.')
+    }
+
+    setHasAppliedInitialEdit(true)
+  }, [
+    estimates,
+    handleEditEstimate,
+    hasAppliedInitialEdit,
+    initialEditingEstimateId,
+  ])
 
   const resetAddressForm = () => {
     setAddressForm({
@@ -286,43 +355,70 @@ export function AdminCustomPlansDashboard({
     try {
       setIsSubmitting(true)
       setStatusNotice('')
-      const response = await fetch('/api/custom-estimates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: selectedUserId,
-          addresses: selectedAddresses,
-          lineItems: normalizedLineItems,
-          monthlyAdjustment,
-          preferredServiceDay,
-          notes,
-          adminNotes,
-          status: nextStatus,
-        }),
-      })
+      const payload = {
+        userId: selectedUserId,
+        addresses: selectedAddresses,
+        lineItems: normalizedLineItems,
+        monthlyAdjustment,
+        preferredServiceDay,
+        notes,
+        adminNotes,
+        status: nextStatus,
+      }
+
+      const isEditing = Boolean(editingEstimateId)
+      const response = await fetch(
+        isEditing ? `/api/custom-estimates/${editingEstimateId}` : '/api/custom-estimates',
+        {
+          method: isEditing ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
+      )
 
       const data = await response.json().catch(() => null)
       if (!response.ok) {
         setStatusNotice(
           typeof data?.error === 'string'
             ? data.error
-            : 'Unable to save the custom plan.',
+            : isEditing
+              ? 'Unable to update the custom plan.'
+              : 'Unable to save the custom plan.',
         )
         return
       }
 
       if (data?.estimate) {
-        setEstimates((prev) => [data.estimate as CustomEstimate, ...prev])
+        if (isEditing) {
+          setEstimates((prev) =>
+            prev.map((estimate) =>
+              estimate.id === editingEstimateId
+                ? (data.estimate as CustomEstimate)
+                : estimate,
+            ),
+          )
+        } else {
+          setEstimates((prev) => [data.estimate as CustomEstimate, ...prev])
+        }
       }
+
       setStatusNotice(
-        nextStatus === 'SENT'
-          ? 'Estimate saved and marked as sent.'
-          : 'Draft estimate saved.',
+        isEditing
+          ? nextStatus === 'SENT'
+            ? 'Custom plan updated and marked as sent.'
+            : 'Custom plan updated.'
+          : nextStatus === 'SENT'
+            ? 'Estimate saved and marked as sent.'
+            : 'Draft estimate saved.',
       )
       resetForm()
     } catch (error) {
       setStatusNotice(
-        error instanceof Error ? error.message : 'Unable to save the custom plan.',
+        error instanceof Error
+          ? error.message
+          : editingEstimateId
+            ? 'Unable to update the custom plan.'
+            : 'Unable to save the custom plan.',
       )
     } finally {
       setIsSubmitting(false)
@@ -334,21 +430,21 @@ export function AdminCustomPlansDashboard({
     nextStatus: 'SENT' | 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'DELETE',
   ) => {
     const isDelete = nextStatus === 'DELETE'
-  
+
     const response = await fetch(`/api/custom-estimates/${estimateId}`, {
       method: isDelete ? 'DELETE' : 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       // Do NOT send a body for DELETE
       body: isDelete ? undefined : JSON.stringify({ status: nextStatus }),
     })
-  
+
     const data = await response.json().catch(() => null)
-  
+
     if (!response.ok) {
       console.error(data?.error ?? 'Failed to update estimate')
       return
     }
-  
+
     // PATCH returns updated estimate
     if (!isDelete && data?.estimate) {
       setEstimates((prev) =>
@@ -356,30 +452,19 @@ export function AdminCustomPlansDashboard({
           estimate.id === estimateId ? data.estimate : estimate,
         ),
       )
+      if (editingEstimateId === estimateId) {
+        handleEditEstimate(data.estimate as CustomEstimate)
+      }
     }
-  
+
     // DELETE removes it from state
     if (isDelete) {
       setEstimates((prev) =>
         prev.filter((estimate) => estimate.id !== estimateId),
       )
-    }
-  }
-  
-
-  const handleRecordPayment = async (estimateId: string) => {
-    const response = await fetch(`/api/custom-estimates/${estimateId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ paymentStatus: 'PAID_ON_FILE', status: 'ACTIVE' }),
-    })
-    const data = await response.json().catch(() => null)
-    if (response.ok && data?.estimate) {
-      setEstimates((prev) =>
-        prev.map((estimate) =>
-          estimate.id === estimateId ? data.estimate : estimate,
-        ),
-      )
+      if (editingEstimateId === estimateId) {
+        resetForm()
+      }
     }
   }
 
@@ -403,10 +488,12 @@ export function AdminCustomPlansDashboard({
         <section className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Estimate details
+              {editingEstimateId ? 'Edit custom plan' : 'Estimate details'}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Choose a customer, select addresses, and itemize recurring work.
+              {editingEstimateId
+                ? 'Update customer details, addresses, and recurring work.'
+                : 'Choose a customer, select addresses, and itemize recurring work.'}
             </p>
           </div>
 
@@ -653,7 +740,7 @@ export function AdminCustomPlansDashboard({
               disabled={isSubmitting}
               onClick={() => handleSubmit('DRAFT')}
             >
-              Save draft
+              {editingEstimateId ? 'Update draft' : 'Save draft'}
             </Button>
             <Button
               type="button"
@@ -661,8 +748,20 @@ export function AdminCustomPlansDashboard({
               disabled={isSubmitting}
               onClick={() => handleSubmit('SENT')}
             >
-              Save & mark sent
+              {editingEstimateId ? 'Update & mark sent' : 'Save & mark sent'}
             </Button>
+            {editingEstimateId ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  resetForm()
+                  setStatusNotice('Edit mode cleared.')
+                }}
+              >
+                Cancel edit
+              </Button>
+            ) : null}
           </div>
         </section>
 
@@ -715,7 +814,19 @@ export function AdminCustomPlansDashboard({
                     <p className="mt-2 font-semibold text-gray-900 dark:text-white">
                       {formatMoney(estimate.total)} / month
                     </p>
+                    {editingEstimateId === estimate.id ? (
+                      <p className="mt-1 text-xs font-semibold text-green-700 dark:text-green-300">
+                        Currently editing
+                      </p>
+                    ) : null}
                     <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleEditEstimate(estimate)}
+                        className="rounded-full border border-green-200 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-100 dark:border-green-500/40 dark:text-green-200 dark:hover:bg-green-500/20"
+                      >
+                        Edit
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleStatusUpdate(estimate.id, 'DELETE')}
@@ -743,13 +854,6 @@ export function AdminCustomPlansDashboard({
                         className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-100 dark:border-white/10 dark:text-gray-200 dark:hover:bg-slate-800"
                       >
                         Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRecordPayment(estimate.id)}
-                        className="rounded-full bg-green-600 px-3 py-1 text-xs font-semibold text-white hover:bg-green-500"
-                      >
-                        Charge on file
                       </button>
                     </div>
                   </div>

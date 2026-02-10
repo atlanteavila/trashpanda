@@ -22,6 +22,29 @@ export type AdminSubscriptionRecord = {
   }
 }
 
+export type AdminCustomPlanSubscriptionRecord = {
+  estimate: {
+    id: string
+    status: string
+    paymentStatus: string
+    total: number
+    preferredServiceDay?: string | null
+    addresses: DashboardAddress[]
+    createdAt: string
+  }
+  user: AdminSubscriptionRecord['user']
+}
+
+const serviceDayLabels: Record<string, string> = {
+  MONDAY: 'Monday',
+  TUESDAY: 'Tuesday',
+  WEDNESDAY: 'Wednesday',
+  THURSDAY: 'Thursday',
+  FRIDAY: 'Friday',
+  SATURDAY: 'Saturday',
+  SUNDAY: 'Sunday',
+}
+
 function buildUserLabel(user: AdminSubscriptionRecord['user']) {
   const displayName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
   return displayName || user.name || user.email
@@ -56,10 +79,39 @@ function matchesQuery(record: AdminSubscriptionRecord, query: string) {
   return haystack.includes(query)
 }
 
+function matchesCustomPlanQuery(record: AdminCustomPlanSubscriptionRecord, query: string) {
+  if (!query) return true
+
+  const primaryAddress = record.estimate.addresses[0]
+  const haystack = [
+    buildUserLabel(record.user),
+    record.user.email,
+    record.estimate.status,
+    record.estimate.paymentStatus,
+    primaryAddress?.street ?? '',
+    primaryAddress?.city ?? '',
+    primaryAddress?.state ?? '',
+  ]
+    .join(' ')
+    .toLowerCase()
+
+  return haystack.includes(query)
+}
+
+function formatServiceDay(value?: string | null) {
+  if (!value) {
+    return 'No preference'
+  }
+
+  return serviceDayLabels[value] ?? value
+}
+
 export function AdminSubscriptionsDashboard({
   subscriptions,
+  customPlanSubscriptions = [],
 }: {
   subscriptions: AdminSubscriptionRecord[]
+  customPlanSubscriptions?: AdminCustomPlanSubscriptionRecord[]
 }) {
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -70,6 +122,14 @@ export function AdminSubscriptionsDashboard({
     () =>
       subscriptions.filter((record) => matchesQuery(record, normalizedQuery)),
     [subscriptions, normalizedQuery],
+  )
+
+  const filteredCustomPlanSubscriptions = useMemo(
+    () =>
+      customPlanSubscriptions.filter((record) =>
+        matchesCustomPlanQuery(record, normalizedQuery),
+      ),
+    [customPlanSubscriptions, normalizedQuery],
   )
 
   const selectedRecord = useMemo(
@@ -113,6 +173,81 @@ export function AdminSubscriptionsDashboard({
         </div>
       </header>
 
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Custom plan subscriptions
+            </h2>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              These custom subscriptions appear first for quick access.
+            </p>
+          </div>
+          <span className="text-sm font-semibold text-gray-900 dark:text-white">
+            {filteredCustomPlanSubscriptions.length}
+          </span>
+        </div>
+
+        {filteredCustomPlanSubscriptions.length === 0 ? (
+          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+            No custom plan subscriptions match your search.
+          </p>
+        ) : (
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {filteredCustomPlanSubscriptions.map((record) => {
+              const address = record.estimate.addresses[0]
+
+              return (
+                <article
+                  key={record.estimate.id}
+                  className="rounded-xl border border-gray-200 p-4 text-sm dark:border-white/10"
+                >
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    {buildUserLabel(record.user)}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {record.user.email}
+                  </p>
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    Status: {record.estimate.status.replace('_', ' ')} · Payment:{' '}
+                    {record.estimate.paymentStatus.replace('_', ' ')}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Service day: {formatServiceDay(record.estimate.preferredServiceDay)}
+                  </p>
+                  {address ? (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {address.label ?? 'Service address'} - {address.street}, {address.city},{' '}
+                      {address.state} {address.postalCode}
+                    </p>
+                  ) : null}
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      ${record.estimate.total.toFixed(2)} / month
+                    </span>
+                    <Button
+                      href={`/dash/admin/custom-plans?estimate=${encodeURIComponent(record.estimate.id)}`}
+                      className="rounded-full"
+                    >
+                      Edit
+                    </Button>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Regular subscriptions
+          </h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            Standard subscriptions remain editable below.
+          </p>
+        </div>
       <div className="grid gap-3 lg:grid-cols-4">
         <div className="space-y-3 lg:col-span-1">
           <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
@@ -199,8 +334,8 @@ export function AdminSubscriptionsDashboard({
                   id: selectedRecord.user.id,
                   email: selectedRecord.user.email,
                   name: buildUserLabel(selectedRecord.user),
-                  firstName: selectedRecord.user.firstName ?? "",
-                  lastName: selectedRecord.user.lastName ?? "",
+                  firstName: selectedRecord.user.firstName ?? '',
+                  lastName: selectedRecord.user.lastName ?? '',
                   phone: selectedRecord.user.phone ?? undefined,
                 }}
                 initialAddresses={selectedRecord.user.addresses}
@@ -222,6 +357,7 @@ export function AdminSubscriptionsDashboard({
           )}
         </div>
       </div>
+      </section>
     </div>
   )
 }

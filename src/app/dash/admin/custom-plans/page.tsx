@@ -91,8 +91,13 @@ function normalizeLineItems(
   })
 }
 
-export default async function AdminCustomPlansPage() {
+export default async function AdminCustomPlansPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ estimate?: string }>
+}) {
   const session = await auth()
+  const params = await searchParams
 
   if (!session?.user) {
     redirect('/login')
@@ -158,6 +163,9 @@ export default async function AdminCustomPlansPage() {
     <AdminCustomPlansDashboard
       users={users}
       initialEstimates={normalizedEstimates}
+      initialEditingEstimateId={
+        typeof params.estimate === 'string' ? params.estimate : null
+      }
     />
   )
 }
